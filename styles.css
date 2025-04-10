@@ -1,0 +1,455 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.page-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px 20px;
+    margin: 0 auto;
+}
+
+.container {
+    display: flex;
+    gap: 20px;
+    min-height: 45vh;
+    margin-bottom: 20px;
+}
+
+.task-column {
+    flex: 1;
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border: 1px solid #3d3d3d;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.task-column h2 {
+    margin-bottom: 15px;
+    color: #ff6b2b;
+    font-weight: 600;
+}
+
+.add-task-btn {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    position: relative;
+}
+
+.add-task-btn:hover {
+    background-color: #5dbd61;
+}
+
+/* Enhanced tooltip styling */
+.add-task-btn[title]:hover:after {
+    /* content: attr(title); */
+    position: absolute;
+    bottom: calc(100% + 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #363636;
+    color: #e0e0e0;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid #444;
+    z-index: 100;
+}
+
+.task-item {
+    background: #363636;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    -webkit-user-drag: element;
+    user-select: none;
+    cursor: grab;
+    border: 1px solid #444;
+    transition: all 0.2s ease;
+}
+
+.task-item:hover {
+    background: #404040;
+    border-color: #ff6b2b;
+}
+
+.task-item:active {
+    cursor: grabbing;
+}
+
+.task-item.dragging {
+    opacity: 0.5;
+    border: 2px dashed #4CAF50;
+    background: #404040;
+}
+
+.task-list {
+    min-height: 10px;
+    padding: 8px 0;
+    max-height: 60vh;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    flex-grow: 1;
+}
+
+.task-list::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.task-list::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.task-checkbox {
+    margin-right: 10px;
+    accent-color: #4CAF50;
+}
+
+.task-name {
+    flex-grow: 1;
+    cursor: pointer;
+    -webkit-user-drag: none;
+    user-select: none;
+    color: #e0e0e0;
+}
+
+.add-subtask-button {
+    background: #363636;
+    border: 1px solid #ff6b2b;
+    color: #ff6b2b;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 1em;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.add-subtask-button:hover {
+    background: #ff6b2b;
+    color: white;
+    transform: scale(1.05);
+}
+
+.task-panel, .deleted-tasks-panel {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+}
+
+.task-panel.active, .deleted-tasks-panel.active {
+    display: block;
+}
+
+.panel-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    border: 1px solid #3d3d3d;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.close-panel {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: none;
+    border: none;
+    color: #ff6b2b;
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-panel:hover {
+    color: #ff8951;
+}
+
+#task-name, #task-description, #task-url {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #363636;
+    color: #e0e0e0;
+}
+
+#task-description {
+    height: 100px;
+    resize: vertical;
+}
+
+.save-task {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.save-task:hover {
+    background-color: #5dbd61;
+}
+
+#subtask-name, #subtask-description, #subtask-url {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #363636;
+    color: #e0e0e0;
+}
+
+#subtask-description {
+    height: 100px;
+    resize: vertical;
+}
+
+.save-subtask {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.save-subtask:hover {
+    background-color: #5dbd61;
+}
+
+.subtasks {
+    margin-top: 15px;
+    border-top: 1px solid #444;
+    padding-top: 15px;
+}
+
+.subtask-list {
+    margin: 10px 0;
+    max-height: 200px;
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+
+.subtask-list::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+}
+
+.subtask-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.subtask-list::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.show-deleted-btn {
+    width: fit-content;
+    margin: 20px auto;
+    display: block;
+    padding: 12px 24px;
+    background-color: #ff6b2b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.show-deleted-btn:hover {
+    background-color: #ff8951;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.deleted-task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #363636;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    border: 1px solid #444;
+}
+
+.restore-task-btn {
+    padding: 4px 8px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.restore-task-btn:hover {
+    background-color: #5dbd61;
+}
+
+.subtask-list .task-item {
+    background: #363636;
+    border-left: 3px solid #4CAF50;
+    margin: 5px 0;
+    padding: 8px;
+}
+
+.remove-subtask-btn {
+    background: none;
+    border: none;
+    color: #ff6b2b;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 5px;
+    transition: color 0.2s ease;
+}
+
+.remove-subtask-btn:hover {
+    color: #ff8951;
+}
+
+.subtask-badge {
+    background-color: #ff6b2b;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+.hero-banner {
+    background: #2d2d2d;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #3d3d3d;
+}
+
+.hero-logo {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.hero-banner h1 {
+    color: #ff6b2b;
+    margin: 0;
+    font-size: 2em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.add-subtask-btn {
+    width: auto;
+    padding: 8px 16px;
+    margin-top: 10px;
+    background-color: #363636;
+    color: #ff6b2b;
+    border: 1px solid #ff6b2b;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-subtask-btn::before {
+    content: '+';
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.add-subtask-btn:hover {
+    background-color: #ff6b2b;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(255, 107, 43, 0.2);
+}
+
+.deleted-task-list {
+    max-height: 60vh;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    margin: 10px 0;
+}
+
+.deleted-task-list::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+}
+
+.deleted-task-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.deleted-task-list::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}

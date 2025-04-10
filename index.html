@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schwartz Inc</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="hero-banner">
+            <img src="logo-gr.png" alt="Task Manager Logo" class="hero-logo">
+        </div>
+
+        <div class="container">
+            <div class="task-column" id="on-it">
+                <h2>🚀 On It</h2>
+                <button class="add-task-btn" title="Add Task (Ctrl + N)">Add Task</button>
+                <div class="task-list"></div>
+            </div>
+            <div class="task-column" id="next-up">
+                <h2>🕗 Next Up</h2>
+                <button class="add-task-btn">Add Task</button>
+                <div class="task-list"></div>
+            </div>
+            <div class="task-column" id="back-log">
+                <h2>📋 Back Log</h2>
+                <button class="add-task-btn">Add Task</button>
+                <div class="task-list"></div>
+            </div>
+        </div>
+
+        <button id="show-deleted-tasks" class="show-deleted-btn">Show Completed</button>
+
+        <div class="task-panel" id="task-panel">
+            <div class="panel-content">
+                <button class="close-panel">&times;</button>
+                <h3>Task Details<span style="font-size: 0.8em; font-weight: normal; opacity: 0.8; margin-left: 8px">(Press Ctrl + N for new subtask)</span></h3>
+                <input type="text" id="task-name" placeholder="Task Name">
+                <textarea id="task-description" placeholder="Task Description (optional)"></textarea>
+                <input type="url" id="task-url" placeholder="URL (optional)">
+                <div class="subtasks">
+                    <h4>Subtasks</h4>
+                    <div class="subtask-list"></div>
+                    <button class="add-subtask-btn">Add Subtask</button>
+                </div>
+                <button class="save-task">Save (Ctrl + Enter)</button>
+            </div>
+        </div>
+
+        <div class="task-panel" id="subtask-panel">
+            <div class="panel-content">
+                <button class="close-panel">&times;</button>
+                <h3>New Subtask</h3>
+                <input type="text" id="subtask-name" placeholder="Subtask Name">
+                <textarea id="subtask-description" placeholder="Subtask Description (optional)"></textarea>
+                <input type="url" id="subtask-url" placeholder="URL (optional)">
+                <button class="save-subtask">Save Subtask (Ctrl + Enter)</button>
+            </div>
+        </div>
+
+        <div class="deleted-tasks-panel" id="deleted-tasks-panel">
+            <div class="panel-content">
+                <button class="close-panel">&times;</button>
+                <h3>Completed Tasks</h3>
+                <div class="deleted-task-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="models/task.js"></script>
+    <script src="models/taskList.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
