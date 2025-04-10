@@ -24,7 +24,7 @@ body {
 .container {
     display: flex;
     gap: 20px;
-    min-height: 45vh;
+    min-height: 35vh;
     margin-bottom: 20px;
 }
 
@@ -452,4 +452,12 @@ body {
 
 .deleted-task-list::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.3);
+}
+
+.bottom-bar {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 10px 0;
+    margin-top: 20px;
 }
