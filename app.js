@@ -34,12 +34,35 @@ class TaskManager {
             document.getElementById('deleted-tasks-panel').classList.remove('active');
         });
 
+        // Clear all deleted tasks
+        document.querySelector('.clear-all-btn').addEventListener('click', () => {
+            if (this.deletedTasks.length === 0) {
+                return;
+            }
+            
+            if (confirm('Are you sure you want to permanently delete all completed tasks?')) {
+                this.deletedTasks = [];
+                this.saveToLocalStorage();
+                this.showDeletedTasksPanel();
+            }
+        });
+
         // Add subtask panel events
         document.querySelector('#subtask-panel .close-panel').addEventListener('click', () => {
             this.closeSubtaskPanel();
         });
 
         document.querySelector('.save-subtask').addEventListener('click', () => this.saveSubtaskFromPanel());
+
+        // Add close button handler for task panel
+        document.querySelector('.close-task-btn').addEventListener('click', () => {
+            this.closeTaskPanel();
+        });
+
+        // Add close button handler for subtask panel
+        document.querySelector('.close-subtask-btn').addEventListener('click', () => {
+            this.closeSubtaskPanel();
+        });
 
         // Setup drag and drop
         this.setupDragAndDrop();
@@ -69,6 +92,11 @@ class TaskManager {
         });
 
         document.querySelector('#deleted-tasks-panel .close-panel').addEventListener('click', () => {
+            this.closeDeletedTasksPanel();
+        });
+
+        // Close completed tasks panel with close button
+        document.querySelector('.close-completed-btn').addEventListener('click', () => {
             this.closeDeletedTasksPanel();
         });
 
@@ -308,11 +336,14 @@ class TaskManager {
         taskElement.querySelector('.task-name').addEventListener('mousedown', e => e.stopPropagation());
 
         taskElement.querySelector('.task-checkbox').addEventListener('change', (e) => {
-            task.completed = e.target.checked;
-            if (task.completed) {
-                this.deleteTask(task, columnId);
+            if (e.target.checked) {
+                taskElement.classList.add('completing');
+                // Wait for animation to complete before removing
+                setTimeout(() => {
+                    task.completed = true;
+                    this.deleteTask(task, columnId);
+                }, 500); // Match the animation duration from CSS
             }
-            this.saveToLocalStorage();
         });
 
         taskElement.querySelector('.task-name').addEventListener('click', () => {
@@ -347,57 +378,39 @@ class TaskManager {
     }
 
     deleteSubtask(parentTask, subtask) {
-        // Remove from parent's subtasks
-        parentTask.removeSubtask(subtask.id);
+        const subtaskElement = document.querySelector(`[data-id="${subtask.id}"]`).closest('.task-item');
+        subtaskElement.classList.add('completing');
         
-        // Add to deleted tasks with parent reference
-        const deletedTask = new Task(
-            subtask.id,
-            subtask.name,
-            subtask.description,
-            subtask.url,
-            true
-        );
-        deletedTask.subtasks = subtask.subtasks;
-        this.deletedTasks.push({
-            ...deletedTask, 
-            deletedFrom: 'subtask',
-            parentTaskId: parentTask.id
-        });
-
-        // Update the UI and save
-        this.updateTaskElement(parentTask);
-        
-        // Refresh the subtasks list in the task panel if it's open
-        if (document.getElementById('task-panel').classList.contains('active')) {
-            const subtaskList = document.querySelector('.subtask-list');
-            subtaskList.innerHTML = '';
-            parentTask.subtasks.forEach(subtask => {
-                const subtaskElement = document.createElement('div');
-                subtaskElement.className = 'task-item';
-                subtaskElement.innerHTML = `
-                    <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
-                    <span class="task-name">${subtask.name}</span>
-                `;
-                
-                // Add checkbox event listener
-                subtaskElement.querySelector('.task-checkbox').addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        this.deleteSubtask(parentTask, subtask);
-                    }
-                });
-
-                // Add click handler for the subtask name
-                subtaskElement.querySelector('.task-name').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.openSubtaskDetailsPanel(subtask);
-                });
-
-                subtaskList.appendChild(subtaskElement);
+        // Wait for animation to complete before removing
+        setTimeout(() => {
+            // Remove from parent's subtasks
+            parentTask.removeSubtask(subtask.id);
+            
+            // Add to deleted tasks with parent reference
+            const deletedTask = new Task(
+                subtask.id,
+                subtask.name,
+                subtask.description,
+                subtask.url,
+                true
+            );
+            deletedTask.subtasks = subtask.subtasks;
+            this.deletedTasks.push({
+                ...deletedTask, 
+                deletedFrom: 'subtask',
+                parentTaskId: parentTask.id
             });
-        }
-        
-        this.saveToLocalStorage();
+
+            // Update the UI and save
+            this.updateTaskElement(parentTask);
+            
+            // Refresh the subtasks list in the task panel if it's open
+            if (document.getElementById('task-panel').classList.contains('active')) {
+                this.refreshSubtasksList(parentTask);
+            }
+            
+            this.saveToLocalStorage();
+        }, 500); // Match the animation duration from CSS
     }
 
     showDeletedTasksPanel() {
