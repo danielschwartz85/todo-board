@@ -392,7 +392,7 @@ body {
 .hero-logo {
     width: 100%;
     height: 200px;
-    object-fit: cover;
+    transform: scaleY(3);
     margin-bottom: 15px;
     border-radius: 4px;
 }
