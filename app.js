@@ -10,6 +10,34 @@ class TaskManager {
         this.setupEventListeners();
         this.currentlyEditingTask = null;
         this.currentlyEditingParentTask = null;
+        this.initializeQuillEditors();
+    }
+
+    initializeQuillEditors() {
+        // Initialize Quill editors with dark theme
+        this.taskQuill = new Quill('#task-description-editor', {
+            theme: 'snow',
+            placeholder: 'Task Description',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            }
+        });
+
+        this.subtaskQuill = new Quill('#subtask-description-editor', {
+            theme: 'snow',
+            placeholder: 'Subtask Description',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            }
+        });
     }
 
     setupEventListeners() {
@@ -210,14 +238,13 @@ class TaskManager {
     openTaskPanel(task = null, columnId = null, parentTask = null) {
         const panel = document.getElementById('task-panel');
         const nameInput = document.getElementById('task-name');
-        const descriptionInput = document.getElementById('task-description');
         const urlInput = document.getElementById('task-url');
         const subtaskList = document.querySelector('.subtask-list');
 
         if (task) {
             this.currentlyEditingTask = task;
             nameInput.value = task.name;
-            descriptionInput.value = task.description;
+            this.taskQuill.root.innerHTML = task.description || '';
             urlInput.value = task.url;
             
             // Display subtasks with tooltips
@@ -261,7 +288,7 @@ class TaskManager {
         } else {
             this.currentlyEditingTask = { columnId, parentTask };
             nameInput.value = '';
-            descriptionInput.value = '';
+            this.taskQuill.root.innerHTML = '';
             urlInput.value = '';
             subtaskList.innerHTML = '';
         }
@@ -275,8 +302,8 @@ class TaskManager {
 
     saveTaskFromPanel() {
         const nameInput = document.getElementById('task-name');
-        const descriptionInput = document.getElementById('task-description');
         const urlInput = document.getElementById('task-url');
+        const description = this.taskQuill.root.innerHTML.trim();
 
         if (!nameInput.value.trim()) {
             alert('Task name is required!');
@@ -286,7 +313,7 @@ class TaskManager {
         if (this.currentlyEditingTask.id) {
             // Editing existing task
             this.currentlyEditingTask.name = nameInput.value;
-            this.currentlyEditingTask.description = descriptionInput.value;
+            this.currentlyEditingTask.description = description;
             this.currentlyEditingTask.url = urlInput.value;
             this.updateTaskElement(this.currentlyEditingTask);
         } else {
@@ -294,7 +321,7 @@ class TaskManager {
             const newTask = new Task(
                 Date.now().toString(),
                 nameInput.value,
-                descriptionInput.value,
+                description,
                 urlInput.value
             );
 
@@ -593,12 +620,11 @@ class TaskManager {
     openSubtaskPanel(parentTask) {
         const panel = document.getElementById('subtask-panel');
         const nameInput = document.getElementById('subtask-name');
-        const descriptionInput = document.getElementById('subtask-description');
         const urlInput = document.getElementById('subtask-url');
 
         this.currentlyEditingParentTask = parentTask;
         nameInput.value = '';
-        descriptionInput.value = '';
+        this.subtaskQuill.root.innerHTML = '';
         urlInput.value = '';
 
         panel.classList.add('active');
@@ -610,17 +636,15 @@ class TaskManager {
     openSubtaskDetailsPanel(subtask) {
         const panel = document.getElementById('subtask-panel');
         const nameInput = document.getElementById('subtask-name');
-        const descriptionInput = document.getElementById('subtask-description');
         const urlInput = document.getElementById('subtask-url');
 
         // Fill in the subtask details
         nameInput.value = subtask.name;
-        descriptionInput.value = subtask.description;
+        this.subtaskQuill.root.innerHTML = subtask.description || '';
         urlInput.value = subtask.url;
 
         // Store the subtask being edited and maintain reference to parent task
         this.currentlyEditingSubtask = subtask;
-        // The parent task is already stored in currentlyEditingTask when viewing task details
         this.currentlyEditingParentTask = this.currentlyEditingTask;
 
         panel.classList.add('active');
@@ -631,8 +655,8 @@ class TaskManager {
 
     saveSubtaskFromPanel() {
         const nameInput = document.getElementById('subtask-name');
-        const descriptionInput = document.getElementById('subtask-description');
         const urlInput = document.getElementById('subtask-url');
+        const description = this.subtaskQuill.root.innerHTML.trim();
 
         if (!nameInput.value.trim()) {
             alert('Subtask name is required!');
@@ -642,7 +666,7 @@ class TaskManager {
         if (this.currentlyEditingSubtask) {
             // Editing existing subtask
             this.currentlyEditingSubtask.name = nameInput.value;
-            this.currentlyEditingSubtask.description = descriptionInput.value;
+            this.currentlyEditingSubtask.description = description;
             this.currentlyEditingSubtask.url = urlInput.value;
             this.updateTaskElement(this.currentlyEditingParentTask);
             
@@ -656,7 +680,7 @@ class TaskManager {
             const newSubtask = new Task(
                 Date.now().toString(),
                 nameInput.value,
-                descriptionInput.value,
+                description,
                 urlInput.value
             );
 
