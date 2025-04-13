@@ -616,3 +616,86 @@ body {
 .save-subtask:hover {
     background-color: #5dbd61;
 }
+
+/* Quill Editor Styles */
+.ql-toolbar.ql-snow {
+    border: 1px solid #444;
+    background: #363636;
+    border-radius: 4px 4px 0 0;
+}
+
+.ql-container.ql-snow {
+    border: 1px solid #444;
+    border-top: 0;
+    background: #363636;
+    color: #e0e0e0;
+    border-radius: 0 0 4px 4px;
+    min-height: 100px;
+    margin-bottom: 10px;
+}
+
+.ql-editor.ql-blank::before {
+    color: #888;
+}
+
+.ql-snow .ql-stroke {
+    stroke: #e0e0e0;
+}
+
+.ql-snow .ql-fill {
+    fill: #e0e0e0;
+}
+
+.ql-snow .ql-picker {
+    color: #e0e0e0;
+}
+
+.ql-snow .ql-picker-options {
+    background-color: #363636;
+    border-color: #444;
+}
+
+.ql-snow.ql-toolbar button:hover,
+.ql-snow .ql-toolbar button:hover,
+.ql-snow.ql-toolbar button:focus,
+.ql-snow .ql-toolbar button:focus,
+.ql-snow.ql-toolbar button.ql-active,
+.ql-snow .ql-toolbar button.ql-active,
+.ql-snow.ql-toolbar .ql-picker-label:hover,
+.ql-snow .ql-toolbar .ql-picker-label:hover,
+.ql-snow.ql-toolbar .ql-picker-label.ql-active,
+.ql-snow .ql-toolbar .ql-picker-label.ql-active,
+.ql-snow.ql-toolbar .ql-picker-item:hover,
+.ql-snow .ql-toolbar .ql-picker-item:hover,
+.ql-snow.ql-toolbar .ql-picker-item.ql-selected,
+.ql-snow .ql-toolbar .ql-picker-item.ql-selected {
+    color: #ff6b2b;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow .ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button:focus .ql-stroke,
+.ql-snow .ql-toolbar button:focus .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.ql-snow .ql-toolbar button.ql-active .ql-stroke,
+.ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke,
+.ql-snow .ql-toolbar .ql-picker-label:hover .ql-stroke {
+    stroke: #ff6b2b;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow .ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button:focus .ql-fill,
+.ql-snow .ql-toolbar button:focus .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill,
+.ql-snow .ql-toolbar button.ql-active .ql-fill,
+.ql-snow.ql-toolbar .ql-picker-label:hover .ql-fill,
+.ql-snow .ql-toolbar .ql-picker-label:hover .ql-fill {
+    fill: #ff6b2b;
+}
+
+/* Make the Quill editor fit the panel width */
+#task-description-editor,
+#subtask-description-editor {
+    margin-bottom: 15px;
+}

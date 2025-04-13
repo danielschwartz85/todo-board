@@ -10,6 +10,34 @@ class TaskManager {
         this.setupEventListeners();
         this.currentlyEditingTask = null;
         this.currentlyEditingParentTask = null;
+        this.initializeQuillEditors();
+    }
+
+    initializeQuillEditors() {
+        // Initialize Quill editors with dark theme
+        this.taskQuill = new Quill('#task-description-editor', {
+            theme: 'snow',
+            placeholder: 'Task Description',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            }
+        });
+
+        this.subtaskQuill = new Quill('#subtask-description-editor', {
+            theme: 'snow',
+            placeholder: 'Subtask Description',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            }
+        });
     }
 
     setupEventListeners() {
@@ -104,9 +132,18 @@ class TaskManager {
         document.addEventListener('keydown', (e) => {
             // Handle Escape key
             if (e.key === 'Escape') {
-                this.closeTaskPanel();
-                this.closeSubtaskPanel();
-                this.closeDeletedTasksPanel();
+                const subtaskPanel = document.getElementById('subtask-panel');
+                const taskPanel = document.getElementById('task-panel');
+                const deletedTasksPanel = document.getElementById('deleted-tasks-panel');
+                
+                // Close only the topmost visible panel
+                if (subtaskPanel.classList.contains('active')) {
+                    this.closeSubtaskPanel();
+                } else if (deletedTasksPanel.classList.contains('active')) {
+                    this.closeDeletedTasksPanel();
+                } else if (taskPanel.classList.contains('active')) {
+                    this.closeTaskPanel();
+                }
                 return;
             }
             
@@ -201,24 +238,27 @@ class TaskManager {
     openTaskPanel(task = null, columnId = null, parentTask = null) {
         const panel = document.getElementById('task-panel');
         const nameInput = document.getElementById('task-name');
-        const descriptionInput = document.getElementById('task-description');
         const urlInput = document.getElementById('task-url');
         const subtaskList = document.querySelector('.subtask-list');
 
         if (task) {
             this.currentlyEditingTask = task;
             nameInput.value = task.name;
-            descriptionInput.value = task.description;
+            this.taskQuill.root.innerHTML = task.description || '';
             urlInput.value = task.url;
             
-            // Display subtasks
+            // Display subtasks with tooltips
             subtaskList.innerHTML = '';
             task.subtasks.forEach(subtask => {
                 const subtaskElement = document.createElement('div');
                 subtaskElement.className = 'task-item';
+                
+                // Add title attribute for tooltip if description exists
+                const titleAttr = subtask.description ? ` title="${subtask.description}"` : '';
+                
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
-                    <span class="task-name">${subtask.name}</span>
+                    <span class="task-name"${titleAttr}>${subtask.name}</span>
                 `;
                 
                 // Add checkbox event listener
@@ -248,7 +288,7 @@ class TaskManager {
         } else {
             this.currentlyEditingTask = { columnId, parentTask };
             nameInput.value = '';
-            descriptionInput.value = '';
+            this.taskQuill.root.innerHTML = '';
             urlInput.value = '';
             subtaskList.innerHTML = '';
         }
@@ -262,8 +302,8 @@ class TaskManager {
 
     saveTaskFromPanel() {
         const nameInput = document.getElementById('task-name');
-        const descriptionInput = document.getElementById('task-description');
         const urlInput = document.getElementById('task-url');
+        const description = this.taskQuill.root.innerHTML.trim();
 
         if (!nameInput.value.trim()) {
             alert('Task name is required!');
@@ -273,7 +313,7 @@ class TaskManager {
         if (this.currentlyEditingTask.id) {
             // Editing existing task
             this.currentlyEditingTask.name = nameInput.value;
-            this.currentlyEditingTask.description = descriptionInput.value;
+            this.currentlyEditingTask.description = description;
             this.currentlyEditingTask.url = urlInput.value;
             this.updateTaskElement(this.currentlyEditingTask);
         } else {
@@ -281,7 +321,7 @@ class TaskManager {
             const newTask = new Task(
                 Date.now().toString(),
                 nameInput.value,
-                descriptionInput.value,
+                description,
                 urlInput.value
             );
 
@@ -310,9 +350,12 @@ class TaskManager {
         // Add a badge showing number of subtasks if any exist
         const subtasksBadge = task.subtasks.length ? `<span class="subtask-badge">${task.subtasks.length}</span>` : '';
         
+        // Add title attribute to task name if description exists
+        const titleAttr = task.description ? ` title="${task.description}"` : '';
+        
         taskElement.innerHTML = `
             <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-            <span class="task-name">${task.name}</span>
+            <span class="task-name"${titleAttr}>${task.name}</span>
             ${subtasksBadge}
             <button class="add-subtask-button" title="Add Subtask">+</button>
         `;
@@ -493,7 +536,15 @@ class TaskManager {
     updateTaskElement(task) {
         const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
         if (taskElement) {
-            taskElement.querySelector('.task-name').textContent = task.name;
+            const taskNameElement = taskElement.querySelector('.task-name');
+            taskNameElement.textContent = task.name;
+            
+            // Update tooltip based on description
+            if (task.description) {
+                taskNameElement.setAttribute('title', task.description);
+            } else {
+                taskNameElement.removeAttribute('title');
+            }
             
             // Update or add the subtask badge
             let subtaskBadge = taskElement.querySelector('.subtask-badge');
@@ -569,12 +620,11 @@ class TaskManager {
     openSubtaskPanel(parentTask) {
         const panel = document.getElementById('subtask-panel');
         const nameInput = document.getElementById('subtask-name');
-        const descriptionInput = document.getElementById('subtask-description');
         const urlInput = document.getElementById('subtask-url');
 
         this.currentlyEditingParentTask = parentTask;
         nameInput.value = '';
-        descriptionInput.value = '';
+        this.subtaskQuill.root.innerHTML = '';
         urlInput.value = '';
 
         panel.classList.add('active');
@@ -586,17 +636,15 @@ class TaskManager {
     openSubtaskDetailsPanel(subtask) {
         const panel = document.getElementById('subtask-panel');
         const nameInput = document.getElementById('subtask-name');
-        const descriptionInput = document.getElementById('subtask-description');
         const urlInput = document.getElementById('subtask-url');
 
         // Fill in the subtask details
         nameInput.value = subtask.name;
-        descriptionInput.value = subtask.description;
+        this.subtaskQuill.root.innerHTML = subtask.description || '';
         urlInput.value = subtask.url;
 
         // Store the subtask being edited and maintain reference to parent task
         this.currentlyEditingSubtask = subtask;
-        // The parent task is already stored in currentlyEditingTask when viewing task details
         this.currentlyEditingParentTask = this.currentlyEditingTask;
 
         panel.classList.add('active');
@@ -607,8 +655,8 @@ class TaskManager {
 
     saveSubtaskFromPanel() {
         const nameInput = document.getElementById('subtask-name');
-        const descriptionInput = document.getElementById('subtask-description');
         const urlInput = document.getElementById('subtask-url');
+        const description = this.subtaskQuill.root.innerHTML.trim();
 
         if (!nameInput.value.trim()) {
             alert('Subtask name is required!');
@@ -618,7 +666,7 @@ class TaskManager {
         if (this.currentlyEditingSubtask) {
             // Editing existing subtask
             this.currentlyEditingSubtask.name = nameInput.value;
-            this.currentlyEditingSubtask.description = descriptionInput.value;
+            this.currentlyEditingSubtask.description = description;
             this.currentlyEditingSubtask.url = urlInput.value;
             this.updateTaskElement(this.currentlyEditingParentTask);
             
@@ -632,7 +680,7 @@ class TaskManager {
             const newSubtask = new Task(
                 Date.now().toString(),
                 nameInput.value,
-                descriptionInput.value,
+                description,
                 urlInput.value
             );
 
@@ -658,9 +706,13 @@ class TaskManager {
             parentTask.subtasks.forEach(subtask => {
                 const subtaskElement = document.createElement('div');
                 subtaskElement.className = 'task-item';
+                
+                // Add title attribute to subtask name if description exists
+                const titleAttr = subtask.description ? ` title="${subtask.description}"` : '';
+                
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
-                    <span class="task-name">${subtask.name}</span>
+                    <span class="task-name"${titleAttr}>${subtask.name}</span>
                 `;
                 
                 // Add checkbox event listener
