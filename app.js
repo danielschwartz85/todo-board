@@ -104,9 +104,18 @@ class TaskManager {
         document.addEventListener('keydown', (e) => {
             // Handle Escape key
             if (e.key === 'Escape') {
-                this.closeTaskPanel();
-                this.closeSubtaskPanel();
-                this.closeDeletedTasksPanel();
+                const subtaskPanel = document.getElementById('subtask-panel');
+                const taskPanel = document.getElementById('task-panel');
+                const deletedTasksPanel = document.getElementById('deleted-tasks-panel');
+                
+                // Close only the topmost visible panel
+                if (subtaskPanel.classList.contains('active')) {
+                    this.closeSubtaskPanel();
+                } else if (deletedTasksPanel.classList.contains('active')) {
+                    this.closeDeletedTasksPanel();
+                } else if (taskPanel.classList.contains('active')) {
+                    this.closeTaskPanel();
+                }
                 return;
             }
             
@@ -211,14 +220,18 @@ class TaskManager {
             descriptionInput.value = task.description;
             urlInput.value = task.url;
             
-            // Display subtasks
+            // Display subtasks with tooltips
             subtaskList.innerHTML = '';
             task.subtasks.forEach(subtask => {
                 const subtaskElement = document.createElement('div');
                 subtaskElement.className = 'task-item';
+                
+                // Add title attribute for tooltip if description exists
+                const titleAttr = subtask.description ? ` title="${subtask.description}"` : '';
+                
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
-                    <span class="task-name">${subtask.name}</span>
+                    <span class="task-name"${titleAttr}>${subtask.name}</span>
                 `;
                 
                 // Add checkbox event listener
@@ -310,9 +323,12 @@ class TaskManager {
         // Add a badge showing number of subtasks if any exist
         const subtasksBadge = task.subtasks.length ? `<span class="subtask-badge">${task.subtasks.length}</span>` : '';
         
+        // Add title attribute to task name if description exists
+        const titleAttr = task.description ? ` title="${task.description}"` : '';
+        
         taskElement.innerHTML = `
             <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-            <span class="task-name">${task.name}</span>
+            <span class="task-name"${titleAttr}>${task.name}</span>
             ${subtasksBadge}
             <button class="add-subtask-button" title="Add Subtask">+</button>
         `;
@@ -493,7 +509,15 @@ class TaskManager {
     updateTaskElement(task) {
         const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
         if (taskElement) {
-            taskElement.querySelector('.task-name').textContent = task.name;
+            const taskNameElement = taskElement.querySelector('.task-name');
+            taskNameElement.textContent = task.name;
+            
+            // Update tooltip based on description
+            if (task.description) {
+                taskNameElement.setAttribute('title', task.description);
+            } else {
+                taskNameElement.removeAttribute('title');
+            }
             
             // Update or add the subtask badge
             let subtaskBadge = taskElement.querySelector('.subtask-badge');
@@ -658,9 +682,13 @@ class TaskManager {
             parentTask.subtasks.forEach(subtask => {
                 const subtaskElement = document.createElement('div');
                 subtaskElement.className = 'task-item';
+                
+                // Add title attribute to subtask name if description exists
+                const titleAttr = subtask.description ? ` title="${subtask.description}"` : '';
+                
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
-                    <span class="task-name">${subtask.name}</span>
+                    <span class="task-name"${titleAttr}>${subtask.name}</span>
                 `;
                 
                 // Add checkbox event listener
