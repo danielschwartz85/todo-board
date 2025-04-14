@@ -254,7 +254,7 @@ class TaskManager {
                 subtaskElement.className = 'task-item';
                 
                 // Add title attribute for tooltip if description exists
-                const titleAttr = subtask.description ? ` title="${subtask.description}"` : '';
+                const titleAttr = subtask.description ? ` title="${this.sanitizeDescription(subtask.description)}"` : '';
                 
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
@@ -350,8 +350,8 @@ class TaskManager {
         // Add a badge showing number of subtasks if any exist
         const subtasksBadge = task.subtasks.length ? `<span class="subtask-badge">${task.subtasks.length}</span>` : '';
         
-        // Add title attribute to task name if description exists
-        const titleAttr = task.description ? ` title="${task.description}"` : '';
+        // Add title attribute to task name if description exists, sanitizing the HTML
+        const titleAttr = task.description ? ` title="${this.sanitizeDescription(task.description)}"` : '';
         
         taskElement.innerHTML = `
             <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
@@ -539,9 +539,9 @@ class TaskManager {
             const taskNameElement = taskElement.querySelector('.task-name');
             taskNameElement.textContent = task.name;
             
-            // Update tooltip based on description
+            // Update tooltip based on description, sanitizing the HTML
             if (task.description) {
-                taskNameElement.setAttribute('title', task.description);
+                taskNameElement.setAttribute('title', this.sanitizeDescription(task.description));
             } else {
                 taskNameElement.removeAttribute('title');
             }
@@ -707,8 +707,8 @@ class TaskManager {
                 const subtaskElement = document.createElement('div');
                 subtaskElement.className = 'task-item';
                 
-                // Add title attribute to subtask name if description exists
-                const titleAttr = subtask.description ? ` title="${subtask.description}"` : '';
+                // Add title attribute to subtask name if description exists, sanitizing the HTML
+                const titleAttr = subtask.description ? ` title="${this.sanitizeDescription(subtask.description)}"` : '';
                 
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
@@ -772,6 +772,37 @@ class TaskManager {
         }
         
         return this.currentlyEditingTask;
+    }
+
+    // Helper function to sanitize HTML content for tooltips
+    sanitizeDescription(html) {
+        if (!html) return '';
+        
+        // Create a temporary div to parse HTML
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        
+        // Handle list items - add a dash and new line
+        temp.querySelectorAll('li').forEach(li => {
+            li.textContent = `• ${li.textContent}\n`;
+        });
+        
+        // Handle paragraphs - add new lines
+        temp.querySelectorAll('p').forEach(p => {
+            p.textContent = `${p.textContent}\n`;
+        });
+        
+        // Get text content (this preserves our added formatting)
+        let text = temp.textContent;
+        
+        // Clean up extra whitespace while preserving intentional line breaks
+        text = text.replace(/\s+/g, ' ')               // Replace multiple spaces with single space
+                   .replace(/\n\s*/g, '\n')           // Clean up spaces after linebreaks
+                   .replace(/^\s+|\s+$/g, '')         // Trim start and end
+                   .replace(/\n+/g, '\n')             // Replace multiple linebreaks with single
+                   .trim();
+        
+        return text;
     }
 }
 
