@@ -802,7 +802,7 @@ class TaskManager {
                    .replace(/\n+/g, '\n')             // Replace multiple linebreaks with single
                    .trim();
         
-        return text;
+        return `${text.substring(0, 50)}...`; // Limit to 100 characters for tooltip
     }
 }
 
