@@ -258,7 +258,7 @@ class TaskManager {
                 
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
-                    <span class="task-name"${titleAttr}>${subtask.name}</span>
+                    <div class="task-name"${titleAttr}><span>${subtask.name}</span></div>
                 `;
                 
                 // Add checkbox event listener
