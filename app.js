@@ -802,8 +802,7 @@ class TaskManager {
                    .replace(/^\s+|\s+$/g, '')         // Trim start and end
                    .replace(/\n+/g, '\n')             // Replace multiple linebreaks with single
                    .trim();
-        if(!text) return ''; // Return empty string if no text
-        return `${text.substring(0, 50)}...`; // Limit to 100 characters for tooltip
+        return text ? `${text.substring(0, 50)}...` : ''; // Limit to 50 characters for tooltip
     }
 
 }
