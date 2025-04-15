@@ -355,7 +355,7 @@ class TaskManager {
         
         taskElement.innerHTML = `
             <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-            <span class="task-name"${titleAttr}>${task.name}</span>
+            <div class="task-name"${titleAttr}><span>${task.name}</span></div>
             ${subtasksBadge}
             <button class="add-subtask-button" title="Add Subtask">+</button>
         `;
@@ -465,7 +465,7 @@ class TaskManager {
             const taskElement = document.createElement('div');
             taskElement.className = 'deleted-task-item';
             taskElement.innerHTML = `
-                <span class="task-name">${task.name}</span>
+                <div class="task-name"><span>${task.name}</span></div>
                 <button class="restore-task-btn" data-task-id="${task.id}">Restore</button>
             `;
 
@@ -536,14 +536,15 @@ class TaskManager {
     updateTaskElement(task) {
         const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
         if (taskElement) {
-            const taskNameElement = taskElement.querySelector('.task-name');
+            const taskNameElement = taskElement.querySelector('.task-name span');
             taskNameElement.textContent = task.name;
             
             // Update tooltip based on description, sanitizing the HTML
+            const taskNameContainer = taskElement.querySelector('.task-name');
             if (task.description) {
-                taskNameElement.setAttribute('title', this.sanitizeDescription(task.description));
+                taskNameContainer.setAttribute('title', this.sanitizeDescription(task.description));
             } else {
-                taskNameElement.removeAttribute('title');
+                taskNameContainer.removeAttribute('title');
             }
             
             // Update or add the subtask badge
@@ -712,7 +713,7 @@ class TaskManager {
                 
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
-                    <span class="task-name"${titleAttr}>${subtask.name}</span>
+                    <div class="task-name"${titleAttr}><span>${subtask.name}</span></div>
                 `;
                 
                 // Add checkbox event listener
@@ -801,9 +802,10 @@ class TaskManager {
                    .replace(/^\s+|\s+$/g, '')         // Trim start and end
                    .replace(/\n+/g, '\n')             // Replace multiple linebreaks with single
                    .trim();
-        
+        if(!text) return ''; // Return empty string if no text
         return `${text.substring(0, 50)}...`; // Limit to 100 characters for tooltip
     }
+
 }
 
 // Initialize the application

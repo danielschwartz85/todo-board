@@ -26,6 +26,8 @@ body {
     gap: 20px;
     min-height: 35vh;
     margin-bottom: 20px;
+    justify-content: space-between;
+    width: 100%;
 }
 
 .task-column {
@@ -38,6 +40,8 @@ body {
     min-height: 300px;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 400px;  /* Set maximum width for columns */
 }
 
 .task-column h2 {
@@ -94,6 +98,9 @@ body {
     cursor: grab;
     border: 1px solid #444;
     transition: all 0.2s ease;
+    width: 100%;
+    min-width: 0;  /* Allows flex item to shrink below content size */
+    max-width: 100%;
 }
 
 .task-item:hover {
@@ -146,6 +153,8 @@ body {
     overflow: auto;
     scrollbar-gutter: stable;
     flex-grow: 1;
+    width: 100%;
+    max-width: 100%;
 }
 
 .task-list::-webkit-scrollbar {
@@ -208,6 +217,44 @@ body {
     -webkit-user-drag: none;
     user-select: none;
     color: #e0e0e0;
+    flex: 1;
+    min-width: 0;  /* Allows flex item to shrink below content size */
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+    max-width: calc(100% - 100px); /* Account for checkbox, badge, and add subtask button */
+}
+
+.task-name span {
+    display: block;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    width: 100%;
+    padding-bottom: 4px; /* Always reserve space for scrollbar */
+    margin-bottom: -4px; /* Offset the padding to maintain consistent height */
+}
+
+/* Hide scrollbar by default */
+.task-name span::-webkit-scrollbar {
+    height: 4px;
+    background: transparent;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+/* Show scrollbar only on hover */
+.task-name:hover span::-webkit-scrollbar {
+    opacity: 1;
+}
+
+/* Apply same scrollbar behavior to deleted tasks */
+.deleted-task-item .task-name span::-webkit-scrollbar {
+    display: none;
+}
+
+.deleted-task-item .task-name:hover span::-webkit-scrollbar {
+    display: block;
 }
 
 .add-subtask-button {
@@ -224,6 +271,7 @@ body {
     justify-content: center;
     min-width: 28px;
     min-height: 28px;
+    flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 .add-subtask-button:hover {
@@ -394,6 +442,34 @@ body {
     margin-bottom: 8px;
     border-radius: 4px;
     border: 1px solid #444;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.deleted-task-item .task-name {
+    flex: 1;
+    min-width: 0;
+    max-width: calc(100% - 80px); /* Account for restore button */
+    overflow: hidden;
+}
+
+.deleted-task-item .task-name span {
+    display: block;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
+    padding-bottom: 4px;
+}
+
+/* Apply same scrollbar behavior to deleted tasks */
+.deleted-task-item .task-name span::-webkit-scrollbar {
+    display: none;
+}
+
+.deleted-task-item .task-name:hover span::-webkit-scrollbar {
+    display: block;
 }
 
 .restore-task-btn {
@@ -415,6 +491,8 @@ body {
     border-left: 3px solid #4CAF50;
     margin: 5px 0;
     padding: 8px;
+    width: 100%;
+    min-width: 0;
 }
 
 .remove-subtask-btn {
@@ -438,6 +516,7 @@ body {
     padding: 2px 6px;
     font-size: 0.8em;
     margin-left: 5px;
+    flex-shrink: 0; /* Prevent badge from shrinking */
 }
 
 .hero-banner {
