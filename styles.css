@@ -27,7 +27,7 @@ body {
     min-height: 35vh;
     margin-bottom: 20px;
     justify-content: space-between;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     width: 100%;
 }
 
@@ -43,11 +43,6 @@ body {
     flex-direction: column;
     width: 100%;
     min-width: 100px;
-}
-
-/* Make back-log column stretch full width when it wraps */
-#back-log {
-    flex: 1 1 100%;
 }
 
 .task-column h2 {
