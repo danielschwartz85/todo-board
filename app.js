@@ -10,6 +10,7 @@ class TaskManager {
         this.setupEventListeners();
         this.currentlyEditingTask = null;
         this.currentlyEditingParentTask = null;
+        this.isDragging = false;
         this.initializeQuillEditors();
     }
 
@@ -97,20 +98,20 @@ class TaskManager {
 
         // Add click outside handlers for panels
         document.getElementById('task-panel').addEventListener('click', (e) => {
-            if (e.target.id === 'task-panel') {
+            if (e.target.id === 'task-panel' && !e.target.classList.contains('no-click')) {
                 this.closeTaskPanel();
             }
         });
 
-        document.getElementById('deleted-tasks-panel').addEventListener('click', (e) => {
-            if (e.target.id === 'deleted-tasks-panel') {
-                this.closeDeletedTasksPanel();
+        document.getElementById('subtask-panel').addEventListener('click', (e) => {
+            if (e.target.id === 'subtask-panel' && !e.target.classList.contains('no-click')) {
+                this.closeSubtaskPanel();
             }
         });
 
-        document.getElementById('subtask-panel').addEventListener('click', (e) => {
-            if (e.target.id === 'subtask-panel') {
-                this.closeSubtaskPanel();
+        document.getElementById('deleted-tasks-panel').addEventListener('click', (e) => {
+            if (e.target.id === 'deleted-tasks-panel' && !e.target.classList.contains('no-click')) {
+                this.closeDeletedTasksPanel();
             }
         });
 
@@ -180,10 +181,83 @@ class TaskManager {
                 }
             }
         });
+
+        // Setup drag and drop for subtasks list
+        const subtaskList = document.querySelector('.subtask-list');
+        subtaskList.addEventListener('dragenter', e => {
+            e.preventDefault();
+        });
+
+        subtaskList.addEventListener('dragover', e => {
+            e.preventDefault();
+            const draggable = document.querySelector('.dragging');
+            if (draggable && draggable.dataset.subtaskId) {  // Only handle subtask elements
+                const afterElement = this.getDragAfterElement(subtaskList, e.clientY);
+                if (afterElement) {
+                    subtaskList.insertBefore(draggable, afterElement);
+                } else {
+                    subtaskList.appendChild(draggable);
+                }
+            }
+        });
+
+        subtaskList.addEventListener('drop', e => {
+            e.preventDefault();
+            const draggable = document.querySelector('.dragging');
+            if (draggable && draggable.dataset.subtaskId && this.currentlyEditingTask) {
+                // Update the subtasks array order based on the new DOM order
+                const newSubtasksOrder = [];
+                subtaskList.querySelectorAll('.task-item').forEach(element => {
+                    const subtask = this.currentlyEditingTask.subtasks.find(
+                        s => s.id === element.dataset.subtaskId
+                    );
+                    if (subtask) {
+                        newSubtasksOrder.push(subtask);
+                    }
+                });
+                this.currentlyEditingTask.subtasks = newSubtasksOrder;
+                this.saveToLocalStorage();
+            }
+        });
     }
 
     setupDragAndDrop() {
         const taskLists = document.querySelectorAll('.task-list');
+
+        // Track dragging state globally
+        document.addEventListener('dragstart', () => {
+            this.isDragging = true;
+        });
+
+        document.addEventListener('dragend', () => {
+            setTimeout(() => {
+                this.isDragging = false;
+                // Remove any lingering classes
+                document.querySelectorAll('.task-panel, .deleted-tasks-panel').forEach(panel => {
+                    panel.classList.remove('no-click');
+                    panel.classList.remove('dragging-subtask');
+                });
+            }, 100);
+        });
+
+        // Add click outside handlers for panels
+        document.getElementById('task-panel').addEventListener('click', (e) => {
+            if (e.target.id === 'task-panel' && !this.isDragging) {
+                this.closeTaskPanel();
+            }
+        });
+
+        document.getElementById('subtask-panel').addEventListener('click', (e) => {
+            if (e.target.id === 'subtask-panel' && !this.isDragging) {
+                this.closeSubtaskPanel();
+            }
+        });
+
+        document.getElementById('deleted-tasks-panel').addEventListener('click', (e) => {
+            if (e.target.id === 'deleted-tasks-panel' && !this.isDragging) {
+                this.closeDeletedTasksPanel();
+            }
+        });
 
         // Setup list event listeners
         taskLists.forEach(list => {
@@ -207,17 +281,266 @@ class TaskManager {
             list.addEventListener('drop', e => {
                 e.preventDefault();
                 const draggable = document.querySelector('.dragging');
+                
+                // Check if this is a subtask being dragged from task panel
+                const dragData = e.dataTransfer.getData('application/json');
+                if (dragData) {
+                    try {
+                        const data = JSON.parse(dragData);
+                        if (data.type === 'subtask') {
+                            const subtaskId = e.dataTransfer.getData('text/plain');
+                            const toColumnId = list.closest('.task-column').id;
+                            
+                            // Get the position where the subtask should be inserted
+                            const afterElement = this.getDragAfterElement(list, e.clientY);
+                            
+                            // Move the subtask to main list
+                            this.moveSubtaskToMainList(subtaskId, data.parentTaskId, toColumnId, afterElement);
+                            return;
+                        }
+                    } catch (err) {
+                        console.error('Error parsing drag data:', err);
+                    }
+                }
+
+                // Handle regular task dragging
                 if (draggable) {
                     const fromColumnId = draggable.dataset.sourceColumn;
                     const toColumnId = list.closest('.task-column').id;
                     const taskId = draggable.dataset.taskId;
                     
-                    if (fromColumnId && toColumnId && fromColumnId !== toColumnId) {
-                        this.moveTask(taskId, fromColumnId, toColumnId);
+                    if (fromColumnId && toColumnId) {
+                        if (fromColumnId !== toColumnId) {
+                            // Moving between lists
+                            this.moveTask(taskId, fromColumnId, toColumnId);
+                        }
+                        
+                        // Update the order in the target list (works for both same list and different list scenarios)
+                        this.updateTaskOrder(toColumnId);
                     }
                 }
             });
         });
+
+        // Set up task items to be droppable targets
+        document.addEventListener('dragover', e => {
+            const taskItem = e.target.closest('.task-item:not(.dragging)');
+            if (taskItem && !taskItem.closest('.subtask-list')) {
+                e.preventDefault();
+                taskItem.style.boxShadow = '0 0 0 2px #ff6b2b';
+            }
+        });
+
+        document.addEventListener('dragleave', e => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                taskItem.style.boxShadow = '';
+            }
+        });
+
+        document.addEventListener('drop', e => {
+            const targetTask = e.target.closest('.task-item:not(.dragging)');
+            if (targetTask && !targetTask.closest('.subtask-list')) {
+                e.preventDefault();
+                targetTask.style.boxShadow = '';
+                
+                const draggingTask = document.querySelector('.dragging');
+                if (draggingTask && draggingTask.dataset.taskId) {
+                    const draggedTaskId = draggingTask.dataset.taskId;
+                    const targetTaskId = targetTask.dataset.taskId;
+                    const fromColumnId = draggingTask.dataset.sourceColumn;
+                    
+                    // Move the task to be a subtask
+                    this.moveTaskToSubtask(draggedTaskId, fromColumnId, targetTaskId);
+                }
+            }
+        });
+
+        // Allow dragging subtasks out of task panel to main lists
+        const subtaskList = document.querySelector('.subtask-list');
+        if (subtaskList) {
+            subtaskList.addEventListener('dragstart', e => {
+                const subtaskElement = e.target.closest('.task-item');
+                if (subtaskElement && subtaskElement.dataset.subtaskId) {
+                    e.dataTransfer.setData('text/plain', subtaskElement.dataset.subtaskId);
+                    e.dataTransfer.setData('application/json', JSON.stringify({
+                        type: 'subtask',
+                        parentTaskId: this.currentlyEditingTask.id
+                    }));
+                    
+                    // Add dragging class to task panel
+                    document.getElementById('task-panel').classList.add('dragging-subtask');
+                }
+            });
+
+            subtaskList.addEventListener('dragend', e => {
+                // Remove dragging class from task panel
+                document.getElementById('task-panel').classList.remove('dragging-subtask');
+                
+                // Re-enable pointer events after a short delay to allow the drop to complete
+                setTimeout(() => {
+                    document.getElementById('task-panel').classList.remove('no-click');
+                }, 100);
+            });
+        }
+
+        // Handle drag start for main tasks
+        document.addEventListener('dragstart', e => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem && !taskItem.closest('.subtask-list')) {
+                // Add class to prevent click events during drag
+                document.querySelectorAll('.task-panel').forEach(panel => {
+                    panel.classList.add('no-click');
+                });
+            }
+        });
+
+        // Handle drag end for main tasks
+        document.addEventListener('dragend', e => {
+            // Re-enable click events after a short delay
+            setTimeout(() => {
+                document.querySelectorAll('.task-panel').forEach(panel => {
+                    panel.classList.remove('no-click');
+                });
+            }, 100);
+        });
+    }
+
+    updateTaskOrder(columnId) {
+        const taskList = document.querySelector(`#${columnId} .task-list`);
+        const newOrder = [];
+        
+        // Get all task elements in their current DOM order
+        taskList.querySelectorAll('.task-item').forEach(taskElement => {
+            const taskId = taskElement.dataset.taskId;
+            const task = this.lists[columnId].getTask(taskId);
+            if (task) {
+                newOrder.push(task);
+            }
+        });
+
+        // Update the tasks array in the list with the new order
+        this.lists[columnId].tasks = newOrder;
+        this.saveToLocalStorage();
+    }
+
+    moveTaskToSubtask(taskId, fromColumnId, targetTaskId) {
+        // Find the source task and target task
+        const sourceTask = this.lists[fromColumnId].getTask(taskId);
+        let targetTask = null;
+        
+        // Search for target task in all lists
+        for (const listKey in this.lists) {
+            const potentialTargetTask = this.lists[listKey].getTask(targetTaskId);
+            if (potentialTargetTask) {
+                targetTask = potentialTargetTask;
+                break;
+            }
+        }
+
+        if (sourceTask && targetTask) {
+            // Remove task from its original list
+            this.lists[fromColumnId].removeTask(taskId);
+            
+            // Convert the task to a subtask and add it to the target task
+            const subtask = new Task(
+                sourceTask.id,
+                sourceTask.name,
+                sourceTask.description,
+                sourceTask.url,
+                sourceTask.completed
+            );
+            subtask.subtasks = sourceTask.subtasks; // Preserve any existing subtasks
+            
+            targetTask.addSubtask(subtask);
+            
+            // Remove the dragged element from DOM
+            document.querySelector(`[data-task-id="${taskId}"]`).remove();
+            
+            // Update the target task's display
+            this.updateTaskElement(targetTask);
+            
+            // Save changes
+            this.saveToLocalStorage();
+        }
+    }
+
+    moveSubtaskToMainList(subtaskId, parentTaskId, toColumnId, afterElement) {
+        // Find the parent task
+        let parentTask = null;
+        for (const list of Object.values(this.lists)) {
+            parentTask = list.tasks.find(t => t.id === parentTaskId);
+            if (parentTask) break;
+        }
+
+        if (parentTask) {
+            // Find the subtask
+            const subtask = parentTask.subtasks.find(s => s.id === subtaskId);
+            if (subtask) {
+                // Remove subtask from parent task
+                parentTask.removeSubtask(subtaskId);
+
+                // Add subtask as a main task in the target column
+                const newTask = new Task(
+                    subtask.id,
+                    subtask.name,
+                    subtask.description,
+                    subtask.url,
+                    subtask.completed
+                );
+                newTask.subtasks = subtask.subtasks; // Preserve any existing subtasks
+
+                this.lists[toColumnId].addTask(newTask);
+
+                // Get the dragged element
+                const draggedElement = document.querySelector(`[data-subtask-id="${subtaskId}"]`);
+                if (draggedElement) {
+                    // Convert the dragged subtask element into a main task element
+                    draggedElement.dataset.taskId = subtaskId;
+                    draggedElement.dataset.sourceColumn = toColumnId;
+                    delete draggedElement.dataset.subtaskId;
+
+                    // Add the + button for adding subtasks
+                    const addSubtaskButton = document.createElement('button');
+                    addSubtaskButton.className = 'add-subtask-button';
+                    addSubtaskButton.title = 'Add Subtask';
+                    addSubtaskButton.textContent = '+';
+                    draggedElement.appendChild(addSubtaskButton);
+
+                    // Add event listener for the add subtask button
+                    addSubtaskButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.openSubtaskPanel(newTask);
+                    });
+
+                    // Update existing event listeners for the task element
+                    draggedElement.querySelector('.task-name').addEventListener('click', () => {
+                        this.openTaskPanel(newTask);
+                    });
+
+                    // Add subtask badge if needed
+                    if (newTask.subtasks.length > 0) {
+                        const badge = document.createElement('span');
+                        badge.className = 'subtask-badge';
+                        badge.textContent = newTask.subtasks.length;
+                        draggedElement.querySelector('.task-name').after(badge);
+                    }
+
+                    // Insert the dragged element at the correct position
+                    if (afterElement) {
+                        afterElement.after(draggedElement);
+                    } else {
+                        document.querySelector(`#${toColumnId} .task-list`).appendChild(draggedElement);
+                    }
+                }
+
+                // Update the parent task's display
+                this.updateTaskElement(parentTask);
+
+                // Save changes
+                this.saveToLocalStorage();
+            }
+        }
     }
 
     getDragAfterElement(container, y) {
@@ -237,6 +560,8 @@ class TaskManager {
 
     openTaskPanel(task = null, columnId = null, parentTask = null) {
         const panel = document.getElementById('task-panel');
+        panel.classList.remove('dragging-subtask');
+        panel.classList.remove('no-click');
         const nameInput = document.getElementById('task-name');
         const urlInput = document.getElementById('task-url');
         const subtaskList = document.querySelector('.subtask-list');
@@ -250,16 +575,42 @@ class TaskManager {
             // Display subtasks with tooltips
             subtaskList.innerHTML = '';
             task.subtasks.forEach(subtask => {
+                // Create subtask element with drag functionality
                 const subtaskElement = document.createElement('div');
                 subtaskElement.className = 'task-item';
+                subtaskElement.draggable = true;  // Make subtask draggable
+                subtaskElement.dataset.subtaskId = subtask.id;
                 
                 // Add title attribute for tooltip if description exists
                 const titleAttr = subtask.description ? ` title="${this.sanitizeDescription(subtask.description)}"` : '';
                 
+                // Add a badge showing number of subtasks if any exist
+                const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
+                
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
                     <div class="task-name"${titleAttr}><span>${subtask.name}</span></div>
+                    ${subtasksBadge}
                 `;
+                
+                // Add drag event listeners for subtasks
+                subtaskElement.addEventListener('dragstart', () => {
+                    subtaskElement.classList.add('dragging');
+                });
+
+                subtaskElement.addEventListener('drag', () => {
+                    subtaskElement.style.opacity = '0.5';
+                });
+
+                subtaskElement.addEventListener('dragend', () => {
+                    subtaskElement.classList.remove('dragging');
+                    subtaskElement.style.opacity = '1';
+                    this.saveToLocalStorage();
+                });
+
+                // Prevent drag initialization on interactive elements
+                subtaskElement.querySelector('.task-checkbox').addEventListener('mousedown', e => e.stopPropagation());
+                subtaskElement.querySelector('.task-name').addEventListener('mousedown', e => e.stopPropagation());
                 
                 // Add checkbox event listener
                 subtaskElement.querySelector('.task-checkbox').addEventListener('change', (e) => {
@@ -568,8 +919,59 @@ class TaskManager {
     moveTask(taskId, fromColumnId, toColumnId) {
         const task = this.lists[fromColumnId].getTask(taskId);
         if (task) {
+            // First remove the task from its original list
             this.lists[fromColumnId].removeTask(taskId);
-            this.lists[toColumnId].addTask(task);
+
+            // Get the dragged element
+            const draggedElement = document.querySelector(`[data-task-id="${taskId}"]`);
+
+            // Handle drop on task list vs drop on task
+            const droppedOnTask = document.querySelector('.task-item[style*="box-shadow"]');
+            if (droppedOnTask && droppedOnTask.dataset.taskId) {
+                // Find the target task in any list
+                let targetTask = null;
+                for (const listKey in this.lists) {
+                    const potentialTargetTask = this.lists[listKey].getTask(droppedOnTask.dataset.taskId);
+                    if (potentialTargetTask) {
+                        targetTask = potentialTargetTask;
+                        break;
+                    }
+                }
+
+                if (targetTask) {
+                    // Convert task to subtask
+                    const subtask = new Task(
+                        task.id,
+                        task.name,
+                        task.description,
+                        task.url,
+                        task.completed
+                    );
+                    subtask.subtasks = task.subtasks;
+                    targetTask.addSubtask(subtask);
+
+                    // Remove the dragged element from DOM immediately
+                    if (draggedElement) {
+                        draggedElement.remove();
+                    }
+
+                    this.updateTaskElement(targetTask);
+                }
+            } else {
+                // Add to the target list as a main task
+                this.lists[toColumnId].addTask(task);
+
+                // Update the task's column reference
+                if (draggedElement) {
+                    draggedElement.dataset.sourceColumn = toColumnId;
+                }
+            }
+
+            // Remove visual highlight from the target task
+            if (droppedOnTask) {
+                droppedOnTask.style.boxShadow = '';
+            }
+
             this.saveToLocalStorage();
         }
     }
@@ -611,11 +1013,20 @@ class TaskManager {
     }
 
     closeTaskPanel() {
-        document.getElementById('task-panel').classList.remove('active');
+        const panel = document.getElementById('task-panel');
+        panel.classList.remove('active');
+        panel.classList.remove('dragging-subtask');
+        panel.classList.remove('no-click');
+        // Reset dragging state
+        this.isDragging = false;
     }
 
     closeDeletedTasksPanel() {
-        document.getElementById('deleted-tasks-panel').classList.remove('active');
+        const panel = document.getElementById('deleted-tasks-panel');
+        panel.classList.remove('active');
+        panel.classList.remove('no-click');
+        // Reset dragging state
+        this.isDragging = false;
     }
 
     openSubtaskPanel(parentTask) {
@@ -705,16 +1116,42 @@ class TaskManager {
             const subtaskList = document.querySelector('.subtask-list');
             subtaskList.innerHTML = '';
             parentTask.subtasks.forEach(subtask => {
+                // Create subtask element with drag functionality
                 const subtaskElement = document.createElement('div');
                 subtaskElement.className = 'task-item';
+                subtaskElement.draggable = true;  // Make subtask draggable
+                subtaskElement.dataset.subtaskId = subtask.id;
                 
-                // Add title attribute to subtask name if description exists, sanitizing the HTML
+                // Add title attribute for tooltip if description exists
                 const titleAttr = subtask.description ? ` title="${this.sanitizeDescription(subtask.description)}"` : '';
+                
+                // Add a badge showing number of subtasks if any exist
+                const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
                 
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
                     <div class="task-name"${titleAttr}><span>${subtask.name}</span></div>
+                    ${subtasksBadge}
                 `;
+                
+                // Add drag event listeners for subtasks
+                subtaskElement.addEventListener('dragstart', () => {
+                    subtaskElement.classList.add('dragging');
+                });
+
+                subtaskElement.addEventListener('drag', () => {
+                    subtaskElement.style.opacity = '0.5';
+                });
+
+                subtaskElement.addEventListener('dragend', () => {
+                    subtaskElement.classList.remove('dragging');
+                    subtaskElement.style.opacity = '1';
+                    this.saveToLocalStorage();
+                });
+
+                // Prevent drag initialization on interactive elements
+                subtaskElement.querySelector('.task-checkbox').addEventListener('mousedown', e => e.stopPropagation());
+                subtaskElement.querySelector('.task-name').addEventListener('mousedown', e => e.stopPropagation());
                 
                 // Add checkbox event listener
                 subtaskElement.querySelector('.task-checkbox').addEventListener('change', (e) => {
@@ -735,9 +1172,13 @@ class TaskManager {
     }
 
     closeSubtaskPanel() {
-        document.getElementById('subtask-panel').classList.remove('active');
+        const panel = document.getElementById('subtask-panel');
+        panel.classList.remove('active');
+        panel.classList.remove('no-click');
         this.currentlyEditingParentTask = null;
         this.currentlyEditingSubtask = null;
+        // Reset dragging state
+        this.isDragging = false;
     }
 
     // Helper method to ensure a task is saved before adding subtasks
