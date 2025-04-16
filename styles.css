@@ -222,7 +222,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     position: relative;
-    max-width: calc(100% - 100px); /* Account for checkbox, badge, and add subtask button */
+    max-width: calc(100% - 80px); /* Account for checkbox and add subtask button only */
 }
 
 .task-name span {
@@ -272,6 +272,7 @@ body {
     min-width: 28px;
     min-height: 28px;
     flex-shrink: 0; /* Prevent button from shrinking */
+    margin-left: auto; /* Push button to the right when no badge */
 }
 
 .add-subtask-button:hover {
@@ -289,10 +290,19 @@ body {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
     z-index: 1000;
+    pointer-events: auto;  /* Enable pointer events by default */
 }
 
 .task-panel.active, .deleted-tasks-panel.active {
     display: block;
+}
+
+.task-panel.dragging-subtask {
+    pointer-events: none;  /* Disable pointer events when dragging */
+}
+
+.task-panel.no-click {
+    pointer-events: none;  /* Disable pointer events when drag ended */
 }
 
 .panel-content {
@@ -307,6 +317,7 @@ body {
     max-width: 500px;
     border: 1px solid #3d3d3d;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    pointer-events: auto !important;  /* Always enable pointer events for panel content */
 }
 
 .close-panel {
@@ -509,6 +520,8 @@ body {
     padding: 8px;
     width: 100%;
     min-width: 0;
+    cursor: grab;
+    transition: all 0.2s ease;
 }
 
 .subtask-list .task-item .task-name {
@@ -541,6 +554,22 @@ body {
     opacity: 1;
 }
 
+.subtask-list .task-item.dragging {
+    opacity: 0.5;
+    border: 2px dashed #4CAF50;
+    background: #404040;
+    cursor: grabbing;
+}
+
+.subtask-list .task-item:active {
+    cursor: grabbing;
+}
+
+.subtask-list .task-item:hover {
+    background: #404040;
+    border-color: #ff6b2b;
+}
+
 .remove-subtask-btn {
     background: none;
     border: none;
@@ -563,6 +592,7 @@ body {
     font-size: 0.8em;
     margin-left: 5px;
     flex-shrink: 0; /* Prevent badge from shrinking */
+    margin-right: 5px; /* Add margin to separate badge from + button */
 }
 
 .hero-banner {
@@ -823,4 +853,8 @@ body {
 #task-description-editor,
 #subtask-description-editor {
     margin-bottom: 15px;
+}
+
+.task-panel.dragging-subtask {
+    background-color: rgba(0, 0, 0, 0.3);  /* Lighter overlay when dragging */
 }
