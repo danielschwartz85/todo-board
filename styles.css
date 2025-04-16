@@ -17,7 +17,7 @@ body {
 .page-wrapper {
     width: 100%;
     max-width: 1200px;
-    padding: 20px 20px;
+    padding: 40px 40px;
     margin: 0 auto;
 }
 
@@ -27,11 +27,12 @@ body {
     min-height: 35vh;
     margin-bottom: 20px;
     justify-content: space-between;
+    flex-wrap: wrap;
     width: 100%;
 }
 
 .task-column {
-    flex: 1;
+    flex: 1 1 calc(50% - 20px);
     background: #2d2d2d;
     padding: 20px;
     border-radius: 8px;
@@ -41,7 +42,12 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 400px;  /* Set maximum width for columns */
+    min-width: 100px;
+}
+
+/* Make back-log column stretch full width when it wraps */
+#back-log {
+    flex: 1 1 100%;
 }
 
 .task-column h2 {
