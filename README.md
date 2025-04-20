@@ -9,7 +9,7 @@ A powerful and elegant task management application with a modern dark theme inte
 - 📝 **Rich Text Editing** - Full formatting support for task descriptions using Quill editor
 - 📑 **Subtasks Support** - Break down complex tasks into manageable subtasks
 - 🔄 **Drag & Drop** - Intuitive drag-and-drop interface for task management
-- 🔗 **URL Support** - Add relevant links to tasks and subtasks
+- 🡽 **URL Support** - Add relevant links to tasks and subtasks
 - ⌨️ **Keyboard Shortcuts**:
   - `Ctrl/Cmd + N` - Create new task/subtask
   - `Ctrl/Cmd + Enter` - Save current task/subtask
@@ -63,6 +63,6 @@ The application uses a carefully crafted dark theme with orange accents. Main co
 
 Copyright © 2025 Daniel Schwartz Inc. All Rights Are All Right!
 
-## 🔗 Live Demo
+## 🡽 Live Demo
 
 Visit the live application at [TODO](https://daniel-schwartz-k.github.io/todo/)

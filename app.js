@@ -588,7 +588,7 @@ class TaskManager {
                 const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
                 
                 // Add URL link button if URL exists
-                const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="↗️ ${subtask.url}" target="_blank">🔗</a>` : '';
+                const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="↗️ ${subtask.url}" target="_blank">🡽</a>` : '';
                 
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
@@ -709,7 +709,7 @@ class TaskManager {
         const titleAttr = task.description ? ` title="${this.sanitizeDescription(task.description)}"` : '';
         
         // Add URL link button if URL exists
-        const urlButton = task.url ? `<a href="${task.url}" class="task-url-link" title="↗️ ${task.url}" target="_blank">🔗</a>` : '';
+        const urlButton = task.url ? `<a href="${task.url}" class="task-url-link" title="↗️ ${task.url}" target="_blank">🡽</a>` : '';
         
         taskElement.innerHTML = `
             <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
@@ -929,7 +929,7 @@ class TaskManager {
                     urlButton.className = 'task-url-link';
                     urlButton.title = `↗️${task.url}`;
                     urlButton.target = '_blank';
-                    urlButton.textContent = '🔗';
+                    urlButton.textContent = '🡽';
                     // Insert before the add subtask button
                     taskElement.querySelector('.add-subtask-button').before(urlButton);
                 }
@@ -1155,7 +1155,7 @@ class TaskManager {
                 const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
                 
                 // Add URL link button if URL exists
-                const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="Open URL" target="_blank">🔗</a>` : '';
+                const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="Open URL" target="_blank">🡽</a>` : '';
                 
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
