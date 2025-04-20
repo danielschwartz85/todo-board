@@ -19,6 +19,9 @@ body {
     max-width: 1200px;
     padding: 40px 40px;
     margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .container {
@@ -27,12 +30,12 @@ body {
     min-height: 35vh;
     margin-bottom: 20px;
     justify-content: space-between;
-    flex-wrap: nowrap;
+    flex-wrap: wrap; /* Change from nowrap to wrap */
     width: 100%;
 }
 
 .task-column {
-    flex: 1 1 calc(50% - 20px);
+    flex: 1 1 100%; /* Change from calc(50% - 20px) to 100% */
     background: #2d2d2d;
     padding: 20px;
     border-radius: 8px;
@@ -117,6 +120,30 @@ body {
     opacity: 0.5;
     border: 2px dashed #4CAF50;
     background: #404040;
+}
+
+.task-url-link {
+    background: #363636;
+    border: 1px solid #ff6b2b;
+    color: #ff6b2b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 0;
+}
+
+.task-url-link:hover {
+    background: #ff6b2b;
+    color: white;
+    transform: scale(1.05);
 }
 
 /* Task deletion animation */
@@ -316,9 +343,26 @@ body {
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
+    max-height: 90vh; /* Limit height to 90% of viewport height */
+    overflow-y: auto; /* Add vertical scrollbar when needed */
     border: 1px solid #3d3d3d;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     pointer-events: auto !important;  /* Always enable pointer events for panel content */
+}
+
+/* Add scrollbar styling for panel content */
+.panel-content::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
 }
 
 .close-panel {
@@ -611,7 +655,7 @@ body {
 .hero-logo {
     width: 100%;
     height: 200px;
-    transform: scaleY(3);
+    transform: scale3d(0.6, 1.9, 1);
     margin-bottom: 15px;
     border-radius: 4px;
 }
@@ -678,7 +722,8 @@ body {
     justify-content: center;
     width: 100%;
     padding: 10px 0;
-    margin-top: 20px;
+    margin-top: auto;
+    background-color: #1a1a1a;
 }
 
 .clear-all-btn {
@@ -858,4 +903,15 @@ body {
 
 .task-panel.dragging-subtask {
     background-color: rgba(0, 0, 0, 0.3);  /* Lighter overlay when dragging */
+}
+
+/* Add media query for wider screens */
+@media screen and (min-width: 768px) {
+    .container {
+        flex-wrap: nowrap;
+    }
+    
+    .task-column {
+        flex: 1 1 calc(50% - 20px);
+    }
 }
