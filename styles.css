@@ -340,9 +340,26 @@ body {
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
+    max-height: 90vh; /* Limit height to 90% of viewport height */
+    overflow-y: auto; /* Add vertical scrollbar when needed */
     border: 1px solid #3d3d3d;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     pointer-events: auto !important;  /* Always enable pointer events for panel content */
+}
+
+/* Add scrollbar styling for panel content */
+.panel-content::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
 }
 
 .close-panel {
