@@ -587,10 +587,14 @@ class TaskManager {
                 // Add a badge showing number of subtasks if any exist
                 const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
                 
+                // Add URL link button if URL exists
+                const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="↗️ ${subtask.url}" target="_blank">🔗</a>` : '';
+                
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
                     <div class="task-name"${titleAttr}><span>${subtask.name}</span></div>
                     ${subtasksBadge}
+                    ${urlButton}
                 `;
                 
                 // Add drag event listeners for subtasks
@@ -704,10 +708,14 @@ class TaskManager {
         // Add title attribute to task name if description exists, sanitizing the HTML
         const titleAttr = task.description ? ` title="${this.sanitizeDescription(task.description)}"` : '';
         
+        // Add URL link button if URL exists
+        const urlButton = task.url ? `<a href="${task.url}" class="task-url-link" title="↗️ ${task.url}" target="_blank">🔗</a>` : '';
+        
         taskElement.innerHTML = `
             <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
             <div class="task-name"${titleAttr}><span>${task.name}</span></div>
             ${subtasksBadge}
+            ${urlButton}
             <button class="add-subtask-button" title="Add Subtask">+</button>
         `;
 
@@ -911,6 +919,24 @@ class TaskManager {
             } else if (subtaskBadge) {
                 // Remove badge if no subtasks
                 subtaskBadge.remove();
+            }
+
+            // Update or add URL link button
+            let urlButton = taskElement.querySelector('.task-url-link');
+            if (task.url) {
+                if (!urlButton) {
+                    urlButton = document.createElement('a');
+                    urlButton.className = 'task-url-link';
+                    urlButton.title = `↗️${task.url}`;
+                    urlButton.target = '_blank';
+                    urlButton.textContent = '🔗';
+                    // Insert before the add subtask button
+                    taskElement.querySelector('.add-subtask-button').before(urlButton);
+                }
+                urlButton.href = task.url;
+            } else if (urlButton) {
+                // Remove URL button if no URL
+                urlButton.remove();
             }
         }
         this.saveToLocalStorage();
@@ -1128,10 +1154,14 @@ class TaskManager {
                 // Add a badge showing number of subtasks if any exist
                 const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
                 
+                // Add URL link button if URL exists
+                const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="Open URL" target="_blank">🔗</a>` : '';
+                
                 subtaskElement.innerHTML = `
                     <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
                     <div class="task-name"${titleAttr}><span>${subtask.name}</span></div>
                     ${subtasksBadge}
+                    ${urlButton}
                 `;
                 
                 // Add drag event listeners for subtasks

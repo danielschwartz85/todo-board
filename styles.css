@@ -119,6 +119,30 @@ body {
     background: #404040;
 }
 
+.task-url-link {
+    background: #363636;
+    border: 1px solid #ff6b2b;
+    color: #ff6b2b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 0;
+}
+
+.task-url-link:hover {
+    background: #ff6b2b;
+    color: white;
+    transform: scale(1.05);
+}
+
 /* Task deletion animation */
 @keyframes taskComplete {
     0% {
