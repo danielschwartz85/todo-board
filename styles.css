@@ -30,12 +30,12 @@ body {
     min-height: 35vh;
     margin-bottom: 20px;
     justify-content: space-between;
-    flex-wrap: nowrap;
+    flex-wrap: wrap; /* Change from nowrap to wrap */
     width: 100%;
 }
 
 .task-column {
-    flex: 1 1 calc(50% - 20px);
+    flex: 1 1 100%; /* Change from calc(50% - 20px) to 100% */
     background: #2d2d2d;
     padding: 20px;
     border-radius: 8px;
@@ -903,4 +903,15 @@ body {
 
 .task-panel.dragging-subtask {
     background-color: rgba(0, 0, 0, 0.3);  /* Lighter overlay when dragging */
+}
+
+/* Add media query for wider screens */
+@media screen and (min-width: 768px) {
+    .container {
+        flex-wrap: nowrap;
+    }
+    
+    .task-column {
+        flex: 1 1 calc(50% - 20px);
+    }
 }
