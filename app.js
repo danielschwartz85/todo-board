@@ -15,18 +15,13 @@
         }
 
         initializeQuillEditors() {
-            // Register highlight.js with Quill
-            hljs.configure({
-                languages: ['plaintext', 'bash', 'typescript', 'json']
-            });
-
             const toolbar = [
                 ['bold', 'italic', 'underline', /* 'strike' */],
                 [{ 'size': ['small', false, 'large', 'huge'] }],
                 [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
                 // [{ 'code-block': { languages: ['plaintext', 'bash', 'typescript', 'json'] } }],
                 [{ 'color': [] }, { 'background': [] }],
-                [{'code-block': { languages: ['plaintext', 'bash', 'typescript', 'json'] }}, 'link', 'image'],
+                ['code-block', 'link', 'image'],
                 // ['link', 'image',  'video', 'formula' ],
                 // [{ 'font': [] }],
                 // ['blockquote'],
@@ -38,6 +33,10 @@
             ]
 
             // Initialize Quill editors with dark theme
+            const supportedLangs = ['plaintext', 'bash','diff','json','xml','yaml','typescript']
+            Object.defineProperty(Quill.imports["modules/syntax"].DEFAULTS, 'languages', {
+                value: supportedLangs.map((l) => ({ key: l, label: l })) 
+            })
             this.taskQuill = new Quill('#task-description-editor', {
                 theme: 'snow',
                 placeholder: 'Task Description',
