@@ -19,10 +19,12 @@ class TaskManager {
         this.taskQuill = new Quill('#task-description-editor', {
             theme: 'snow',
             placeholder: 'Task Description',
+            syntax: true, 
             modules: {
                 toolbar: [
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['code-block'],
                     ['clean']
                 ]
             }
@@ -31,10 +33,12 @@ class TaskManager {
         this.subtaskQuill = new Quill('#subtask-description-editor', {
             theme: 'snow',
             placeholder: 'Subtask Description',
+            syntax: true, 
             modules: {
                 toolbar: [
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['code-block'],
                     ['clean']
                 ]
             }
