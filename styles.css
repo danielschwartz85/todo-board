@@ -342,7 +342,7 @@ body {
     padding: 20px;
     border-radius: 8px;
     width: 90%;
-    max-width: 600px;
+    max-width: 700px;
     max-height: 90vh; /* Limit height to 90% of viewport height */
     overflow-y: auto; /* Add vertical scrollbar when needed */
     border: 1px solid #3d3d3d;
