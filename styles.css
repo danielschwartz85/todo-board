@@ -935,3 +935,12 @@ body {
         border-radius: 4px;
     }
 }
+
+/* Quill changes for my dark theme */
+.ql-editor li[data-list=checked] > .ql-ui:before,
+.ql-editor li[data-list=unchecked] > .ql-ui:before {
+    color: #d1af8e;
+}
+.ql-snow a {
+    color: #5e9ddc;
+}
