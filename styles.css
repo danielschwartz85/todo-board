@@ -946,3 +946,6 @@ body {
     color: #5e9ddc;
     font-variant: emoji
 }
+.ql-container {
+    font-size: 14.5px;
+}
