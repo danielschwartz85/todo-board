@@ -107,9 +107,12 @@ body {
     max-width: 100%;
 }
 
-.task-item:hover, .task-item:focus-visible {
+.task-item:hover, .task-item:focus {
     background: #404040;
     border-color: #ff6b2b;
+}
+
+.task-item:focus {
     outline: none;
 }
 

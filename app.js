@@ -1,4 +1,4 @@
-    class TaskManager {
+class TaskManager {
         constructor() {
             this.lists = {
                 'on-it': new TaskList('on-it'),
@@ -598,6 +598,13 @@
                     subtaskElement.className = 'task-item';
                     subtaskElement.draggable = true;  // Make subtask draggable
                     subtaskElement.dataset.subtaskId = subtask.id;
+                    subtaskElement.setAttribute('tabindex', '0');
+
+                    subtaskElement.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && !e.target.classList.contains('task-checkbox')) {
+                            this.openTaskPanel(task, columnId);
+                        }
+                    });
                     
                     // Add title attribute for tooltip if description exists
                     const titleAttr = subtask.description ? ` title="${this.sanitizeDescription(subtask.description)}"` : '';
@@ -606,7 +613,7 @@
                     const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
                     
                     // Add URL link button if URL exists
-                    const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="↗️ ${subtask.url}" target="_blank">🡽</a>` : '';
+                    const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="Open URL" target="_blank">🡽</a>` : '';
                     
                     subtaskElement.innerHTML = `
                         <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
@@ -774,6 +781,13 @@
             taskElement.querySelector('.add-subtask-button').addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent task panel from opening
                 this.openSubtaskPanel(task);
+            });
+
+            // Add keyboard event listener for opening task panel
+            taskElement.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.target.classList.contains('task-checkbox')) {
+                    this.openTaskPanel(task);
+                }
             });
 
             document.querySelector(`#${columnId} .task-list`).appendChild(taskElement);
@@ -1166,6 +1180,7 @@
                     subtaskElement.className = 'task-item';
                     subtaskElement.draggable = true;  // Make subtask draggable
                     subtaskElement.dataset.subtaskId = subtask.id;
+                    subtaskElement.setAttribute('tabindex', '0');
                     
                     // Add title attribute for tooltip if description exists
                     const titleAttr = subtask.description ? ` title="${this.sanitizeDescription(subtask.description)}"` : '';
