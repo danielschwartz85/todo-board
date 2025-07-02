@@ -732,7 +732,7 @@
             
             taskElement.innerHTML = `
                 <input type="checkbox" class="task-checkbox" tabIndex=-1 ${task.completed ? 'checked' : ''}>
-                <div class="task-name"${titleAttr}><span>${task.name}</span></div>
+                <div class="task-name"${titleAttr}><span tabIndex=-1>${task.name}</span></div>
                 ${subtasksBadge}
                 ${urlButton}
                 <button class="add-subtask-button" tabIndex=-1 title="Add Subtask">+</button>
