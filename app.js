@@ -719,6 +719,7 @@
             taskElement.draggable = true;
             taskElement.dataset.taskId = task.id;
             taskElement.dataset.sourceColumn = columnId;
+            taskElement.tabIndex = 0
             
             // Add a badge showing number of subtasks if any exist
             const subtasksBadge = task.subtasks.length ? `<span class="subtask-badge">${task.subtasks.length}</span>` : '';
@@ -727,14 +728,14 @@
             const titleAttr = task.description ? ` title="${this.sanitizeDescription(task.description)}"` : '';
             
             // Add URL link button if URL exists
-            const urlButton = task.url ? `<a href="${task.url}" class="task-url-link" title="↗️ ${task.url}" target="_blank">🡽</a>` : '';
+            const urlButton = task.url ? `<a href="${task.url}" tabIndex=0 class="task-url-link" title="↗️ ${task.url}" target="_blank">🡽</a>` : '';
             
             taskElement.innerHTML = `
-                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                <input type="checkbox" class="task-checkbox" tabIndex=-1 ${task.completed ? 'checked' : ''}>
                 <div class="task-name"${titleAttr}><span>${task.name}</span></div>
                 ${subtasksBadge}
                 ${urlButton}
-                <button class="add-subtask-button" title="Add Subtask">+</button>
+                <button class="add-subtask-button" tabIndex=-1 title="Add Subtask">+</button>
             `;
 
             taskElement.addEventListener('dragstart', () => {
