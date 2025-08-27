@@ -9,6 +9,7 @@ const ASSETS_TO_CACHE = [
   '/models/taskList.js',
   '/logo-gr.png',
   '/icons/icon2.jpg',
+  '/icons/icon8.jpg',
   '/manifest.webmanifest',
   'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css',
   'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js',
