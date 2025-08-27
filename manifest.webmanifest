@@ -1,0 +1,16 @@
+{
+  "name": "Schwartz Inc Todo",
+  "short_name": "Todo",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#ff6b2b",
+  "description": "A simple offline-capable todo app.",
+  "icons": [
+    {
+      "src": "icons/icon2.jpg",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
