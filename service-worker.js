@@ -1,18 +1,18 @@
 // service-worker.js
 const CACHE_NAME = 'todo-app-cache-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/models/task.js',
-  '/models/taskList.js',
-  '/banners/banner.png',
-  '/manifest.webmanifest',
-  'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css',
-  'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/base16/dracula.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js'
+  '/todo-board/',
+  '/todo-board/index.html',
+  '/todo-board/styles.css',
+  '/todo-board/app.js',
+  '/todo-board/models/task.js',
+  '/todo-board/models/taskList.js',
+  '/todo-board/banners/banner.png',
+  '/todo-board/manifest.webmanifest',
+  '/todo-board/vendor/quill/quill.snow.css',
+  '/todo-board/vendor/quill/quill.js',
+  '/todo-board/vendor/highlightjs/base16-dracula.min.css',
+  '/todo-board/vendor/highlightjs/highlight.min.js'
 ];
 
 self.addEventListener('install', event => {
