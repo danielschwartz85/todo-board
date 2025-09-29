@@ -16,7 +16,7 @@ class TaskManager {
 
         initializeQuillEditors() {
             const toolbar = [
-                ['bold', 'italic', 'underline', /* 'strike' */],
+                ['bold', 'italic', 'underline', 'strike'],
                 [{ 'indent': '-1'}, { 'indent': '+1' }],
                 [{ 'size': ['small', false, 'large', 'huge'] }],
                 [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
