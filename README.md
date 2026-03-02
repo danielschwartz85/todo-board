@@ -24,8 +24,7 @@ A powerful and elegant task management application with a modern dark theme inte
    ```bash
    git clone https://github.com/your-username/task-manager.git
    ```
-2. comment out <base href="/todo/"> in index.html
-3. Open `index.html` in your web browser
+2. Open `index.html` in your web browser
 
 That's it! No build process or dependencies to install. The application uses CDN-hosted Quill.js for rich text editing.
 
