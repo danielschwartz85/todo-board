@@ -1098,9 +1098,9 @@ class TaskManager {
                 const jsonString = JSON.stringify(data);
                 this.showLoading('Saving...');
                 try {
-                    await Airtable.base(baseId)('daniel-k').update(
+                    await Airtable.base(baseId)('todo-app').update(
                         this._airtableRecordId,
-                        { TaskData: jsonString }
+                        { taskData: jsonString }
                     );
                 } catch (err) {
                     console.error('Failed to save to Airtable:', err);
@@ -1121,19 +1121,19 @@ class TaskManager {
             };
             this.showLoading('Loading...');
             try {
-                const records = await Airtable.base(baseId)('daniel-k')
-                    .select({ maxRecords: 1, fields: ['TaskData'] })
+                const records = await Airtable.base(baseId)('todo-app')
+                    .select({ maxRecords: 1, fields: ['taskData'] })
                     .firstPage();
 
                 if (!records || records.length === 0) {
-                    const created = await Airtable.base(baseId)('daniel-k')
-                        .create({ TaskData: JSON.stringify(DEFAULT_DATA) });
+                    const created = await Airtable.base(baseId)('todo-app')
+                        .create({ taskData: JSON.stringify(DEFAULT_DATA) });
                     this._airtableRecordId = created.id;
                     return;
                 }
 
                 this._airtableRecordId = records[0].id;
-                const raw = records[0].get('TaskData');
+                const raw = records[0].get('taskData');
                 if (!raw) return;
 
                 const parsed = JSON.parse(raw);

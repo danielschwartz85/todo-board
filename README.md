@@ -14,7 +14,7 @@ A powerful and elegant task management application with a modern dark theme inte
   - `Ctrl + Alt + N` - Create new task/subtask
   - `Ctrl/Cmd + Enter` - Save current task/subtask
   - `Esc` - Close panels
-- 💾 **Persistent Storage** - All data is automatically saved to local storage
+- 💾 **Persistent Storage** - Data saved to AirTable (cloud)
 - 🗑️ **Task Archive** - Completed tasks are archived and can be restored
 - 📱 **Responsive Design** - Works great on both desktop and mobile devices
 
@@ -28,13 +28,39 @@ A powerful and elegant task management application with a modern dark theme inte
 
 That's it! No build process or dependencies to install. The application uses CDN-hosted Quill.js for rich text editing.
 
+## 🗄️ Database Persistence (AirTable)
+
+To enable cloud persistence via AirTable, pass the following URL parameters when opening the app:
+
+| Parameter | Description |
+|-----------|-------------|
+| `token`   | Your AirTable API key |
+| `baseId`  | Your AirTable Base ID |
+
+**Example URL:**
+```
+index.html?token=YOUR_AIRTABLE_API_KEY&baseId=YOUR_BASE_ID
+```
+
+### AirTable Schema
+
+The app expects the following table structure in your AirTable base:
+
+| Property   | Value      |
+|------------|------------|
+| Table name | `todo-app` |
+| Field name | `taskData` |
+| Field type | Long text  |
+
+The `taskData` field stores the entire task list as a serialized JSON string. The app reads the first record in the table and creates one automatically if none exists.
+
 ## 💻 Technologies
 
 - Vanilla JavaScript (ES6+)
 - HTML5
 - CSS3
 - [Quill.js](https://quilljs.com/) for rich text editing
-- LocalStorage for data persistence
+- [AirTable](https://airtable.com/) for cloud data persistence
 
 ## 🔨 Development
 
