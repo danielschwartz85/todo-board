@@ -11,7 +11,7 @@ A powerful and elegant task management application with a modern dark theme inte
 - 🔄 **Drag & Drop** - Intuitive drag-and-drop interface for task management
 - 🡽 **URL Support** - Add relevant links to tasks and subtasks
 - ⌨️ **Keyboard Shortcuts**:
-  - `Ctrl/Cmd + N` - Create new task/subtask
+  - `Ctrl + Alt + N` - Create new task/subtask
   - `Ctrl/Cmd + Enter` - Save current task/subtask
   - `Esc` - Close panels
 - 💾 **Persistent Storage** - All data is automatically saved to local storage
@@ -24,8 +24,8 @@ A powerful and elegant task management application with a modern dark theme inte
    ```bash
    git clone https://github.com/your-username/task-manager.git
    ```
-
-2. Open `index.html` in your web browser
+2. comment out <base href="/todo/"> in index.html
+3. Open `index.html` in your web browser
 
 That's it! No build process or dependencies to install. The application uses CDN-hosted Quill.js for rich text editing.
 

@@ -417,6 +417,12 @@ body {
     background-color: #5dbd61;
 }
 
+.save-task:disabled {
+    background-color: #3a5c3b;
+    color: #888;
+    cursor: not-allowed;
+}
+
 #subtask-name, #subtask-description, #subtask-url {
     width: 100%;
     padding: 8px;
@@ -446,6 +452,12 @@ body {
 
 .save-subtask:hover {
     background-color: #5dbd61;
+}
+
+.save-subtask:disabled {
+    background-color: #3a5c3b;
+    color: #888;
+    cursor: not-allowed;
 }
 
 .subtasks {
@@ -821,6 +833,12 @@ body {
 
 .save-subtask:hover {
     background-color: #5dbd61;
+}
+
+.save-subtask:disabled {
+    background-color: #3a5c3b;
+    color: #888;
+    cursor: not-allowed;
 }
 
 /* Quill Editor Styles */
