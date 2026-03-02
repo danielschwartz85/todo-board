@@ -1,3 +1,17 @@
+const params = new URLSearchParams(window.location.search);
+const apiKey = params.get('token');
+const baseId = params.get('baseId');
+
+if (apiKey) {
+    Airtable.configure({ apiKey });
+} else {
+    alert('Missing "token" query parameter for API key');
+}
+
+if (!baseId) {
+    alert('Missing "baseId" query parameter');
+}
+
 class TaskManager {
         constructor() {
             this.lists = {
@@ -6,12 +20,15 @@ class TaskManager {
                 'back-log': new TaskList('back-log')
             };
             this.deletedTasks = [];
-            this.loadFromLocalStorage();
-            this.setupEventListeners();
+            this._airtableRecordId = null;
+            this._saveDebounceTimer = null;
             this.currentlyEditingTask = null;
             this.currentlyEditingParentTask = null;
             this.isDragging = false;
             this.initializeQuillEditors();
+            this.loadFromDb().then(() => {
+                this.setupEventListeners();
+            });
         }
 
         initializeQuillEditors() {
@@ -111,7 +128,7 @@ class TaskManager {
                 
                 if (confirm('Are you sure you want to permanently delete all completed tasks?')) {
                     this.deletedTasks = [];
-                    this.saveToLocalStorage();
+                    this.saveToDb();
                     this.showDeletedTasksPanel();
                 }
             });
@@ -256,7 +273,7 @@ class TaskManager {
                         }
                     });
                     this.currentlyEditingTask.subtasks = newSubtasksOrder;
-                    this.saveToLocalStorage();
+                    this.saveToDb();
                 }
             });
         }
@@ -461,7 +478,7 @@ class TaskManager {
 
             // Update the tasks array in the list with the new order
             this.lists[columnId].tasks = newOrder;
-            this.saveToLocalStorage();
+            this.saveToDb();
         }
 
         moveTaskToSubtask(taskId, fromColumnId, targetTaskId) {
@@ -501,7 +518,7 @@ class TaskManager {
                 this.updateTaskElement(targetTask);
                 
                 // Save changes
-                this.saveToLocalStorage();
+                this.saveToDb();
             }
         }
 
@@ -578,7 +595,7 @@ class TaskManager {
                     this.updateTaskElement(parentTask);
 
                     // Save changes
-                    this.saveToLocalStorage();
+                    this.saveToDb();
                 }
             }
         }
@@ -656,7 +673,7 @@ class TaskManager {
                     subtaskElement.addEventListener('dragend', () => {
                         subtaskElement.classList.remove('dragging');
                         subtaskElement.style.opacity = '1';
-                        this.saveToLocalStorage();
+                        this.saveToDb();
                     });
 
                     // Prevent drag initialization on interactive elements
@@ -740,7 +757,7 @@ class TaskManager {
                 this.currentlyEditingTask = newTask;
             }
 
-            this.saveToLocalStorage();
+            this.saveToDb();
             document.querySelector('.save-task').disabled = true;
         }
 
@@ -833,7 +850,7 @@ class TaskManager {
             if (taskElement) {
                 taskElement.remove();
             }
-            this.saveToLocalStorage();
+            this.saveToDb();
         }
 
         deleteSubtask(parentTask, subtask) {
@@ -868,7 +885,7 @@ class TaskManager {
                     this.refreshSubtasksList(parentTask);
                 }
                 
-                this.saveToLocalStorage();
+                this.saveToDb();
             }, 500); // Match the animation duration from CSS
         }
 
@@ -945,7 +962,7 @@ class TaskManager {
                 this.createTaskElement(restoredTask, columnId);
             }
             
-            this.saveToLocalStorage();
+            this.saveToDb();
             this.showDeletedTasksPanel();
         }
 
@@ -996,7 +1013,7 @@ class TaskManager {
                     urlButton.remove();
                 }
             }
-            this.saveToLocalStorage();
+            this.saveToDb();
         }
 
         moveTask(taskId, fromColumnId, toColumnId) {
@@ -1055,25 +1072,71 @@ class TaskManager {
                     droppedOnTask.style.boxShadow = '';
                 }
 
-                this.saveToLocalStorage();
+                this.saveToDb();
             }
         }
 
-        saveToLocalStorage() {
-            const data = {
-                lists: Object.entries(this.lists).reduce((acc, [key, list]) => {
-                    acc[key] = list.toJSON();
-                    return acc;
-                }, {}),
-                deletedTasks: this.deletedTasks
-            };
-            localStorage.setItem('taskManager', JSON.stringify(data));
+        showLoading(label = 'Loading...') {
+            document.getElementById('loading-label').textContent = label;
+            document.getElementById('loading-overlay').classList.add('active');
         }
 
-        loadFromLocalStorage() {
-            const data = localStorage.getItem('taskManager');
-            if (data) {
-                const parsed = JSON.parse(data);
+        hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('active');
+        }
+
+        saveToDb() {
+            clearTimeout(this._saveDebounceTimer);
+            this._saveDebounceTimer = setTimeout(async () => {
+                const data = {
+                    lists: Object.entries(this.lists).reduce((acc, [key, list]) => {
+                        acc[key] = list.toJSON();
+                        return acc;
+                    }, {}),
+                    deletedTasks: this.deletedTasks
+                };
+                const jsonString = JSON.stringify(data);
+                this.showLoading('Saving...');
+                try {
+                    await Airtable.base(baseId)('daniel-k').update(
+                        this._airtableRecordId,
+                        { TaskData: jsonString }
+                    );
+                } catch (err) {
+                    console.error('Failed to save to Airtable:', err);
+                } finally {
+                    this.hideLoading();
+                }
+            }, 500);
+        }
+
+        async loadFromDb() {
+            const DEFAULT_DATA = {
+                lists: {
+                    'on-it':    { type: 'on-it',    tasks: [] },
+                    'next-up':  { type: 'next-up',  tasks: [] },
+                    'back-log': { type: 'back-log', tasks: [] }
+                },
+                deletedTasks: []
+            };
+            this.showLoading('Loading...');
+            try {
+                const records = await Airtable.base(baseId)('daniel-k')
+                    .select({ maxRecords: 1, fields: ['TaskData'] })
+                    .firstPage();
+
+                if (!records || records.length === 0) {
+                    const created = await Airtable.base(baseId)('daniel-k')
+                        .create({ TaskData: JSON.stringify(DEFAULT_DATA) });
+                    this._airtableRecordId = created.id;
+                    return;
+                }
+
+                this._airtableRecordId = records[0].id;
+                const raw = records[0].get('TaskData');
+                if (!raw) return;
+
+                const parsed = JSON.parse(raw);
                 Object.entries(parsed.lists || {}).forEach(([key, listData]) => {
                     this.lists[key] = TaskList.fromJSON(listData);
                     this.lists[key].tasks.forEach(task => {
@@ -1092,6 +1155,10 @@ class TaskManager {
                     task.subtasks = (taskData.subtasks || []).map(subtask => Task.fromJSON(subtask));
                     return {...task, deletedFrom: taskData.deletedFrom};
                 });
+            } catch (err) {
+                console.error('Failed to load from Airtable:', err);
+            } finally {
+                this.hideLoading();
             }
         }
 
@@ -1170,7 +1237,7 @@ class TaskManager {
                 // Refresh the subtasks list in the task panel
                 this.refreshSubtasksList(this.currentlyEditingParentTask);
 
-                this.saveToLocalStorage();
+                this.saveToDb();
             } else if (this.currentlyEditingParentTask) {
                 // Creating new subtask
                 const newSubtask = new Task(
@@ -1187,7 +1254,7 @@ class TaskManager {
                 this.refreshSubtasksList(this.currentlyEditingParentTask);
 
                 this.currentlyEditingSubtask = newSubtask;
-                this.saveToLocalStorage();
+                this.saveToDb();
             }
             document.querySelector('.save-subtask').disabled = true;
         }
@@ -1233,7 +1300,7 @@ class TaskManager {
                     subtaskElement.addEventListener('dragend', () => {
                         subtaskElement.classList.remove('dragging');
                         subtaskElement.style.opacity = '1';
-                        this.saveToLocalStorage();
+                        this.saveToDb();
                     });
 
                     // Prevent drag initialization on interactive elements
@@ -1296,7 +1363,7 @@ class TaskManager {
                 // Update current editing task reference
                 this.currentlyEditingTask = newTask;
                 
-                this.saveToLocalStorage();
+                this.saveToDb();
                 return newTask;
             }
             

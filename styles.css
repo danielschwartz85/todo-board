@@ -959,6 +959,42 @@ body {
     }
 }
 
+/* Loading overlay */
+#loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+#loading-overlay.active {
+    display: flex;
+}
+.loading-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    background: #2d2d2d;
+    border-radius: 8px;
+    padding: 28px 36px;
+    color: #e0e0e0;
+    font-size: 0.95em;
+}
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #444;
+    border-top-color: #ff6b2b;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* Quill changes for my dark theme */
 .ql-editor li[data-list=checked] > .ql-ui:before,
 .ql-editor li[data-list=unchecked] > .ql-ui:before {
