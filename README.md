@@ -11,7 +11,7 @@ A powerful and elegant task management application with a modern dark theme inte
 - 🔄 **Drag & Drop** - Intuitive drag-and-drop interface for task management
 - 🡽 **URL Support** - Add relevant links to tasks and subtasks
 - ⌨️ **Keyboard Shortcuts**:
-  - `Ctrl/Cmd + N` - Create new task/subtask
+  - `Ctrl + Alt + N` - Create new task/subtask
   - `Ctrl/Cmd + Enter` - Save current task/subtask
   - `Esc` - Close panels
 - 💾 **Persistent Storage** - All data is automatically saved to local storage

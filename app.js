@@ -167,7 +167,7 @@ class TaskManager {
                 }
                 
                 // Handle Ctrl + N for new task/subtask
-                if (e.key === 'n' && (e.ctrlKey || e.metaKey)) {
+                if (e.key === 'n' && (e.ctrlKey || e.metaKey) && e.altKey) {
                     e.preventDefault();
                     
                     const taskPanel = document.getElementById('task-panel');
