@@ -57,6 +57,28 @@ class TaskManager {
                     toolbar 
                 }
             });
+
+            // Task panel dirty tracking
+            document.getElementById('task-name').addEventListener('input', () => {
+                document.querySelector('.save-task').disabled = false;
+            });
+            document.getElementById('task-url').addEventListener('input', () => {
+                document.querySelector('.save-task').disabled = false;
+            });
+            this.taskQuill.on('text-change', (delta, oldDelta, source) => {
+                if (source === 'user') document.querySelector('.save-task').disabled = false;
+            });
+
+            // Subtask panel dirty tracking
+            document.getElementById('subtask-name').addEventListener('input', () => {
+                document.querySelector('.save-subtask').disabled = false;
+            });
+            document.getElementById('subtask-url').addEventListener('input', () => {
+                document.querySelector('.save-subtask').disabled = false;
+            });
+            this.subtaskQuill.on('text-change', (delta, oldDelta, source) => {
+                if (source === 'user') document.querySelector('.save-subtask').disabled = false;
+            });
         }
 
         setupEventListeners() {
@@ -184,8 +206,8 @@ class TaskManager {
                     return;
                 }
 
-                // Handle Ctrl + Enter
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                // Handle Ctrl + Alt + S
+                if (e.key === 's' && e.ctrlKey && e.altKey) {
                     e.preventDefault();
                     
                     // Find the topmost visible panel
@@ -587,7 +609,7 @@ class TaskManager {
             if (task) {
                 this.currentlyEditingTask = task;
                 nameInput.value = task.name;
-                this.taskQuill.root.innerHTML = task.description || '';
+                this.taskQuill.clipboard.dangerouslyPasteHTML(task.description || '');
                 urlInput.value = task.url;
                 
                 // Display subtasks with tooltips
@@ -668,13 +690,14 @@ class TaskManager {
             } else {
                 this.currentlyEditingTask = { columnId, parentTask };
                 nameInput.value = '';
-                this.taskQuill.root.innerHTML = '';
+                this.taskQuill.setText('');
                 urlInput.value = '';
                 subtaskList.innerHTML = '';
             }
 
+            document.querySelector('.save-task').disabled = true;
             panel.classList.add('active');
-            
+
             // Focus on the task name input after the panel is shown
             // Use setTimeout to ensure the focus happens after the panel is visible
             setTimeout(() => nameInput.focus(), 0);
@@ -714,10 +737,11 @@ class TaskManager {
                     this.lists[this.currentlyEditingTask.columnId].addTask(newTask);
                     this.createTaskElement(newTask, this.currentlyEditingTask.columnId);
                 }
+                this.currentlyEditingTask = newTask;
             }
 
             this.saveToLocalStorage();
-            document.getElementById('task-panel').classList.remove('active');
+            document.querySelector('.save-task').disabled = true;
         }
 
         createTaskElement(task, columnId) {
@@ -1095,11 +1119,12 @@ class TaskManager {
 
             this.currentlyEditingParentTask = parentTask;
             nameInput.value = '';
-            this.subtaskQuill.root.innerHTML = '';
+            this.subtaskQuill.setText('');
             urlInput.value = '';
 
+            document.querySelector('.save-subtask').disabled = true;
             panel.classList.add('active');
-            
+
             // Focus on the subtask name input after the panel is shown
             setTimeout(() => nameInput.focus(), 0);
         }
@@ -1111,15 +1136,16 @@ class TaskManager {
 
             // Fill in the subtask details
             nameInput.value = subtask.name;
-            this.subtaskQuill.root.innerHTML = subtask.description || '';
+            this.subtaskQuill.clipboard.dangerouslyPasteHTML(subtask.description || '');
             urlInput.value = subtask.url;
 
             // Store the subtask being edited and maintain reference to parent task
             this.currentlyEditingSubtask = subtask;
             this.currentlyEditingParentTask = this.currentlyEditingTask;
 
+            document.querySelector('.save-subtask').disabled = true;
             panel.classList.add('active');
-            
+
             // Focus on the subtask name input after the panel is shown
             setTimeout(() => nameInput.focus(), 0);
         }
@@ -1140,12 +1166,11 @@ class TaskManager {
                 this.currentlyEditingSubtask.description = description;
                 this.currentlyEditingSubtask.url = urlInput.value;
                 this.updateTaskElement(this.currentlyEditingParentTask);
-                
+
                 // Refresh the subtasks list in the task panel
                 this.refreshSubtasksList(this.currentlyEditingParentTask);
-                
+
                 this.saveToLocalStorage();
-                this.closeSubtaskPanel();
             } else if (this.currentlyEditingParentTask) {
                 // Creating new subtask
                 const newSubtask = new Task(
@@ -1157,16 +1182,14 @@ class TaskManager {
 
                 this.currentlyEditingParentTask.addSubtask(newSubtask);
                 this.updateTaskElement(this.currentlyEditingParentTask);
-                
+
                 // Refresh the subtasks list in the task panel
                 this.refreshSubtasksList(this.currentlyEditingParentTask);
-                
+
+                this.currentlyEditingSubtask = newSubtask;
                 this.saveToLocalStorage();
-                this.closeSubtaskPanel();
             }
-            
-            // Reset the editing state
-            this.currentlyEditingSubtask = null;
+            document.querySelector('.save-subtask').disabled = true;
         }
 
         // Helper method to refresh the subtasks list
