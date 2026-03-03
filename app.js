@@ -1,6 +1,8 @@
 const params = new URLSearchParams(window.location.search);
 const apiKey = params.get('token');
 const baseId = params.get('baseId');
+const tableName = params.get('tableName');
+const DataFiledName = 'data';
 
 if (apiKey) {
     Airtable.configure({ apiKey });
@@ -10,6 +12,10 @@ if (apiKey) {
 
 if (!baseId) {
     alert('Missing "baseId" query parameter');
+}
+
+if (!tableName) {
+    alert('Missing "tableName" query parameter');
 }
 
 class TaskManager {
@@ -1098,9 +1104,9 @@ class TaskManager {
                 const jsonString = JSON.stringify(data);
                 this.showLoading('Saving...');
                 try {
-                    await Airtable.base(baseId)('todo-app').update(
+                    await Airtable.base(baseId)(tableName).update(
                         this._airtableRecordId,
-                        { taskData: jsonString }
+                        { [DataFiledName]: jsonString }
                     );
                 } catch (err) {
                     console.error('Failed to save to Airtable:', err);
@@ -1121,19 +1127,19 @@ class TaskManager {
             };
             this.showLoading('Loading...');
             try {
-                const records = await Airtable.base(baseId)('todo-app')
-                    .select({ maxRecords: 1, fields: ['taskData'] })
+                const records = await Airtable.base(baseId)(tableName)
+                    .select({ maxRecords: 1, fields: [DataFiledName] })
                     .firstPage();
 
                 if (!records || records.length === 0) {
-                    const created = await Airtable.base(baseId)('todo-app')
-                        .create({ taskData: JSON.stringify(DEFAULT_DATA) });
+                    const created = await Airtable.base(baseId)(tableName)
+                        .create({ [DataFiledName]: JSON.stringify(DEFAULT_DATA) });
                     this._airtableRecordId = created.id;
                     return;
                 }
 
                 this._airtableRecordId = records[0].id;
-                const raw = records[0].get('taskData');
+                const raw = records[0].get(DataFiledName);
                 if (!raw) return;
 
                 const parsed = JSON.parse(raw);
@@ -1153,7 +1159,7 @@ class TaskManager {
                         taskData.completed
                     );
                     task.subtasks = (taskData.subtasks || []).map(subtask => Task.fromJSON(subtask));
-                    return {...task, deletedFrom: taskData.deletedFrom};
+                    return {...taskData, deletedFrom: taskData.deletedFrom};
                 });
             } catch (err) {
                 console.error('Failed to load from Airtable:', err);
