@@ -36,23 +36,23 @@ To enable cloud persistence via AirTable, pass the following URL parameters when
 |-----------|-------------|
 | `token`   | Your AirTable API key |
 | `baseId`  | Your AirTable Base ID |
+| `tableName` | Name of the table to use |
 
 **Example URL:**
 ```
-index.html?token=YOUR_AIRTABLE_API_KEY&baseId=YOUR_BASE_ID
+index.html?token=YOUR_AIRTABLE_API_KEY&baseId=YOUR_BASE_ID&tableName=work
 ```
 
 ### AirTable Schema
 
-The app expects the following table structure in your AirTable base:
+The app expects to have a `data` field in the specified AirTable table to store the task list:
 
 | Property   | Value      |
 |------------|------------|
-| Table name | `todo-app` |
-| Field name | `taskData` |
+| Field name | `data`     |
 | Field type | Long text  |
 
-The `taskData` field stores the entire task list as a serialized JSON string. The app reads the first record in the table and creates one automatically if none exists.
+The `data` field stores the entire task list as a serialized JSON string. The app reads the **first record** in the table and creates one automatically if none exists.
 
 ## 💻 Technologies
 
