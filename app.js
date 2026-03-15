@@ -1,21 +1,32 @@
-const params = new URLSearchParams(window.location.search);
-const apiKey = params.get('token');
-const baseId = params.get('baseId');
-const tableName = params.get('tableName');
+let apiKey = localStorage.getItem('airtable-token');
+let baseId = localStorage.getItem('airtable-baseId');
+let tableName = localStorage.getItem('airtable-tableName');
 const DataFiledName = 'data';
 
-if (apiKey) {
-    Airtable.configure({ apiKey });
-} else {
-    alert('Missing "token" query parameter for API key');
-}
-
-if (!baseId) {
-    alert('Missing "baseId" query parameter');
-}
-
-if (!tableName) {
-    alert('Missing "tableName" query parameter');
+function initPersistMode() {
+    const persistMode = localStorage.getItem('persistMode');
+    if (persistMode === null) {
+        if (confirm('Would you like to sync with AirTable?')) {
+            const newTableName = prompt('Enter your AirTable table name:');
+            if (newTableName === null) { localStorage.setItem('persistMode', 'LocalStorage'); return; }
+            const newBaseId = prompt('Enter your AirTable Base ID:');
+            if (newBaseId === null) { localStorage.setItem('persistMode', 'LocalStorage'); return; }
+            const newToken = prompt('Enter your AirTable API token:');
+            if (newToken === null) { localStorage.setItem('persistMode', 'LocalStorage'); return; }
+            localStorage.setItem('airtable-tableName', newTableName);
+            localStorage.setItem('airtable-baseId', newBaseId);
+            localStorage.setItem('airtable-token', newToken);
+            localStorage.setItem('persistMode', 'AirTable');
+            tableName = newTableName;
+            baseId = newBaseId;
+            apiKey = newToken;
+            Airtable.configure({ apiKey });
+        } else {
+            localStorage.setItem('persistMode', 'LocalStorage');
+        }
+    } else if (persistMode === 'AirTable') {
+        Airtable.configure({ apiKey });
+    }
 }
 
 class TaskManager {
@@ -121,6 +132,9 @@ class TaskManager {
             // Deleted tasks panel events
             document.getElementById('show-deleted-tasks').addEventListener('click', () => this.showDeletedTasksPanel());
             document.getElementById('sync-btn').addEventListener('click', () => this.syncWithAirtable());
+            if (localStorage.getItem('persistMode') !== 'AirTable') {
+                document.getElementById('sync-btn').disabled = true;
+            }
             document.querySelector('#deleted-tasks-panel .close-panel').addEventListener('click', () => {
                 document.getElementById('deleted-tasks-panel').classList.remove('active');
             });
@@ -1096,7 +1110,8 @@ class TaskManager {
                     acc[key] = list.toJSON();
                     return acc;
                 }, {}),
-                deletedTasks: this.deletedTasks
+                deletedTasks: this.deletedTasks,
+                updatedAt: new Date().toISOString()
             };
             localStorage.setItem('todo-app-data', JSON.stringify(data));
         }
@@ -1175,6 +1190,7 @@ class TaskManager {
         }
 
         async syncWithAirtable() {
+            if (localStorage.getItem('persistMode') !== 'AirTable') return;
             const DEFAULT_DATA = {
                 lists: {
                     'on-it':    { type: 'on-it',    tasks: [] },
@@ -1197,25 +1213,29 @@ class TaskManager {
                 } else if (!localData) {
                     merged = airtableData;
                 } else {
-                    const airtableTime = airtableData.updatedAt ? new Date(airtableData.updatedAt).getTime() : 0;
+                    const airtableTime = airtableData.updatedAt ? new Date(airtableData.updatedAt).getTime() : null;
                     const localTime = localData.updatedAt ? new Date(localData.updatedAt).getTime() : 0;
-                    const stronger = airtableTime >= localTime ? airtableData : localData;
-                    const weaker = airtableTime >= localTime ? localData : airtableData;
+                    const stronger = (airtableTime === null || airtableTime < localTime) ? localData : airtableData;
+                    const weaker = stronger === localData ? airtableData : localData;
 
-                    // Build flat set of all task names in stronger across all lists
-                    const strongerAllNames = new Set();
+                    // Build flat set of all task ids in stronger across all lists
+                    const strongerAllIds = new Set();
                     for (const listKey of ['on-it', 'next-up', 'back-log']) {
                         for (const task of (stronger.lists?.[listKey]?.tasks || [])) {
-                            strongerAllNames.add(task.name);
+                            strongerAllIds.add(task.id);
                         }
                     }
 
+                    // Build set of task ids deleted in the stronger version
+                    const strongerDeletedIds = new Set((stronger.deletedTasks || []).map(t => t.id));
+
                     // Merge lists: start with stronger, append weaker tasks not present in stronger
+                    // Skip weaker tasks that were explicitly deleted in the stronger version
                     const mergedLists = {};
                     for (const listKey of ['on-it', 'next-up', 'back-log']) {
                         const mergedTasks = [...(stronger.lists?.[listKey]?.tasks || [])];
                         for (const task of (weaker.lists?.[listKey]?.tasks || [])) {
-                            if (!strongerAllNames.has(task.name)) {
+                            if (!strongerAllIds.has(task.id) && !strongerDeletedIds.has(task.id)) {
                                 mergedTasks.push(task);
                             }
                         }
@@ -1223,10 +1243,9 @@ class TaskManager {
                     }
 
                     // Merge deletedTasks
-                    const strongerDeletedNames = new Set((stronger.deletedTasks || []).map(t => t.name));
                     const mergedDeletedTasks = [...(stronger.deletedTasks || [])];
                     for (const task of (weaker.deletedTasks || [])) {
-                        if (!strongerDeletedNames.has(task.name) && !strongerAllNames.has(task.name)) {
+                        if (!strongerDeletedIds.has(task.id) && !strongerAllIds.has(task.id)) {
                             mergedDeletedTasks.push(task);
                         }
                     }
@@ -1512,5 +1531,6 @@ class TaskManager {
 
     // Initialize the application
     document.addEventListener('DOMContentLoaded', () => {
+        initPersistMode();
         new TaskManager();
     });
