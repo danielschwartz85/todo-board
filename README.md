@@ -28,24 +28,18 @@ A powerful and elegant task management application with a modern dark theme inte
 
 That's it! No build process or dependencies to install. The application uses CDN-hosted Quill.js for rich text editing.
 
-## 🗄️ Database Persistence (AirTable)
+## 🗄️ Database Persistence
 
-To enable cloud persistence via AirTable, pass the following URL parameters when opening the app:
+On first load, the app prompts you to choose a storage mode:
 
-| Parameter | Description |
-|-----------|-------------|
-| `token`   | Your AirTable API key |
-| `baseId`  | Your AirTable Base ID |
-| `tableName` | Name of the table to use |
+- **AirTable** — syncs tasks to an AirTable base. You will be prompted for your table name, Base ID, and API token. These are saved to `localStorage` so you won't be asked again.
+- **LocalStorage** — tasks are stored only in your browser's `localStorage`. The sync button is disabled in this mode.
 
-**Example URL:**
-```
-index.html?token=YOUR_AIRTABLE_API_KEY&baseId=YOUR_BASE_ID&tableName=work
-```
+To reset your storage choice (e.g. to switch modes or update credentials), clear `localStorage` for the page and reload.
 
 ### AirTable Schema
 
-The app expects to have a `data` field in the specified AirTable table to store the task list:
+The app expects a `data` field in the specified AirTable table:
 
 | Property   | Value      |
 |------------|------------|
@@ -53,6 +47,16 @@ The app expects to have a `data` field in the specified AirTable table to store 
 | Field type | Long text  |
 
 The `data` field stores the entire task list as a serialized JSON string. The app reads the **first record** in the table and creates one automatically if none exists.
+
+### Sync Merge Logic
+
+When syncing, the app compares the `updatedAt` timestamp of the local and AirTable data and treats the newer one as the **stronger** version. If AirTable data has no timestamp (e.g. data written before the sync feature was added), local data is always considered stronger.
+
+The merge then applies the following rules:
+
+- All tasks from the stronger version are kept as-is.
+- A task that exists only in the weaker version is added to the merged result **only if** its ID does not appear in the stronger version's `deletedTasks` list. If it does appear there, the task was intentionally deleted in the stronger version and is not re-added.
+- Deleted tasks from the weaker version are similarly only carried over if they are not already tracked in the stronger version.
 
 ## 💻 Technologies
 
