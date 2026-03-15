@@ -27,14 +27,12 @@ class TaskManager {
             };
             this.deletedTasks = [];
             this._airtableRecordId = null;
-            this._saveDebounceTimer = null;
             this.currentlyEditingTask = null;
             this.currentlyEditingParentTask = null;
             this.isDragging = false;
             this.initializeQuillEditors();
-            this.loadFromDb().then(() => {
-                this.setupEventListeners();
-            });
+            this.loadFromDb();
+            this.setupEventListeners();
         }
 
         initializeQuillEditors() {
@@ -122,6 +120,7 @@ class TaskManager {
 
             // Deleted tasks panel events
             document.getElementById('show-deleted-tasks').addEventListener('click', () => this.showDeletedTasksPanel());
+            document.getElementById('sync-btn').addEventListener('click', () => this.syncWithAirtable());
             document.querySelector('#deleted-tasks-panel .close-panel').addEventListener('click', () => {
                 document.getElementById('deleted-tasks-panel').classList.remove('active');
             });
@@ -1092,31 +1091,17 @@ class TaskManager {
         }
 
         saveToDb() {
-            clearTimeout(this._saveDebounceTimer);
-            this._saveDebounceTimer = setTimeout(async () => {
-                const data = {
-                    lists: Object.entries(this.lists).reduce((acc, [key, list]) => {
-                        acc[key] = list.toJSON();
-                        return acc;
-                    }, {}),
-                    deletedTasks: this.deletedTasks
-                };
-                const jsonString = JSON.stringify(data);
-                this.showLoading('Saving...');
-                try {
-                    await Airtable.base(baseId)(tableName).update(
-                        this._airtableRecordId,
-                        { [DataFiledName]: jsonString }
-                    );
-                } catch (err) {
-                    console.error('Failed to save to Airtable:', err);
-                } finally {
-                    this.hideLoading();
-                }
-            }, 500);
+            const data = {
+                lists: Object.entries(this.lists).reduce((acc, [key, list]) => {
+                    acc[key] = list.toJSON();
+                    return acc;
+                }, {}),
+                deletedTasks: this.deletedTasks
+            };
+            localStorage.setItem('todo-app-data', JSON.stringify(data));
         }
 
-        async loadFromDb() {
+        loadFromDb() {
             const DEFAULT_DATA = {
                 lists: {
                     'on-it':    { type: 'on-it',    tasks: [] },
@@ -1125,7 +1110,36 @@ class TaskManager {
                 },
                 deletedTasks: []
             };
-            this.showLoading('Loading...');
+            const raw = localStorage.getItem('todo-app-data');
+            const parsed = raw ? JSON.parse(raw) : DEFAULT_DATA;
+            Object.entries(parsed.lists || {}).forEach(([key, listData]) => {
+                this.lists[key] = TaskList.fromJSON(listData);
+                this.lists[key].tasks.forEach(task => {
+                    this.createTaskElement(task, key);
+                });
+            });
+            this.deletedTasks = (parsed.deletedTasks || []).map(taskData => {
+                const task = new Task(
+                    taskData.id,
+                    taskData.name,
+                    taskData.description,
+                    taskData.url,
+                    taskData.completed
+                );
+                task.subtasks = (taskData.subtasks || []).map(subtask => Task.fromJSON(subtask));
+                return {...taskData, deletedFrom: taskData.deletedFrom};
+            });
+        }
+
+        async loadFromAirtable() {
+            const DEFAULT_DATA = {
+                lists: {
+                    'on-it':    { type: 'on-it',    tasks: [] },
+                    'next-up':  { type: 'next-up',  tasks: [] },
+                    'back-log': { type: 'back-log', tasks: [] }
+                },
+                deletedTasks: []
+            };
             try {
                 const records = await Airtable.base(baseId)(tableName)
                     .select({ maxRecords: 1, fields: [DataFiledName] })
@@ -1135,22 +1149,100 @@ class TaskManager {
                     const created = await Airtable.base(baseId)(tableName)
                         .create({ [DataFiledName]: JSON.stringify(DEFAULT_DATA) });
                     this._airtableRecordId = created.id;
-                    return;
+                    return null;
                 }
 
                 this._airtableRecordId = records[0].id;
                 const raw = records[0].get(DataFiledName);
-                if (!raw) return;
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (err) {
+                console.error('Failed to load from Airtable:', err);
+                return null;
+            }
+        }
 
-                const parsed = JSON.parse(raw);
-                Object.entries(parsed.lists || {}).forEach(([key, listData]) => {
+        async saveToAirtable(data) {
+            const jsonString = JSON.stringify(data);
+            try {
+                await Airtable.base(baseId)(tableName).update(
+                    this._airtableRecordId,
+                    { [DataFiledName]: jsonString }
+                );
+            } catch (err) {
+                console.error('Failed to save to Airtable:', err);
+            }
+        }
+
+        async syncWithAirtable() {
+            const DEFAULT_DATA = {
+                lists: {
+                    'on-it':    { type: 'on-it',    tasks: [] },
+                    'next-up':  { type: 'next-up',  tasks: [] },
+                    'back-log': { type: 'back-log', tasks: [] }
+                },
+                deletedTasks: []
+            };
+            this.showLoading('Syncing...');
+            try {
+                const airtableData = await this.loadFromAirtable();
+                const localRaw = localStorage.getItem('todo-app-data');
+                const localData = localRaw ? JSON.parse(localRaw) : null;
+
+                let merged;
+                if (!airtableData && !localData) {
+                    merged = DEFAULT_DATA;
+                } else if (!airtableData) {
+                    merged = localData;
+                } else if (!localData) {
+                    merged = airtableData;
+                } else {
+                    const airtableTime = airtableData.updatedAt ? new Date(airtableData.updatedAt).getTime() : 0;
+                    const localTime = localData.updatedAt ? new Date(localData.updatedAt).getTime() : 0;
+                    const stronger = airtableTime >= localTime ? airtableData : localData;
+                    const weaker = airtableTime >= localTime ? localData : airtableData;
+
+                    // Build flat set of all task names in stronger across all lists
+                    const strongerAllNames = new Set();
+                    for (const listKey of ['on-it', 'next-up', 'back-log']) {
+                        for (const task of (stronger.lists?.[listKey]?.tasks || [])) {
+                            strongerAllNames.add(task.name);
+                        }
+                    }
+
+                    // Merge lists: start with stronger, append weaker tasks not present in stronger
+                    const mergedLists = {};
+                    for (const listKey of ['on-it', 'next-up', 'back-log']) {
+                        const mergedTasks = [...(stronger.lists?.[listKey]?.tasks || [])];
+                        for (const task of (weaker.lists?.[listKey]?.tasks || [])) {
+                            if (!strongerAllNames.has(task.name)) {
+                                mergedTasks.push(task);
+                            }
+                        }
+                        mergedLists[listKey] = { type: listKey, tasks: mergedTasks };
+                    }
+
+                    // Merge deletedTasks
+                    const strongerDeletedNames = new Set((stronger.deletedTasks || []).map(t => t.name));
+                    const mergedDeletedTasks = [...(stronger.deletedTasks || [])];
+                    for (const task of (weaker.deletedTasks || [])) {
+                        if (!strongerDeletedNames.has(task.name) && !strongerAllNames.has(task.name)) {
+                            mergedDeletedTasks.push(task);
+                        }
+                    }
+
+                    merged = { lists: mergedLists, deletedTasks: mergedDeletedTasks };
+                }
+
+                merged.updatedAt = new Date().toISOString();
+                await this.saveToAirtable(merged);
+                localStorage.setItem('todo-app-data', JSON.stringify(merged));
+
+                // Hydrate in-memory state from merged
+                Object.entries(merged.lists || {}).forEach(([key, listData]) => {
                     this.lists[key] = TaskList.fromJSON(listData);
-                    this.lists[key].tasks.forEach(task => {
-                        this.createTaskElement(task, key);
-                    });
                 });
-                // Convert deleted tasks back to Task instances
-                this.deletedTasks = (parsed.deletedTasks || []).map(taskData => {
+                this.deletedTasks = (merged.deletedTasks || []).map(taskData => {
                     const task = new Task(
                         taskData.id,
                         taskData.name,
@@ -1161,10 +1253,20 @@ class TaskManager {
                     task.subtasks = (taskData.subtasks || []).map(subtask => Task.fromJSON(subtask));
                     return {...taskData, deletedFrom: taskData.deletedFrom};
                 });
+
+                this.renderAllTasks();
             } catch (err) {
-                console.error('Failed to load from Airtable:', err);
+                console.error('Failed to sync with Airtable:', err);
             } finally {
                 this.hideLoading();
+            }
+        }
+
+        renderAllTasks() {
+            for (const [listKey, list] of Object.entries(this.lists)) {
+                const container = document.querySelector(`#${listKey} .task-list`);
+                container.innerHTML = '';
+                list.tasks.forEach(task => this.createTaskElement(task, listKey));
             }
         }
 
